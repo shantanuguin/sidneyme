@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidney Apparels - Operator Performance System v17</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">LOADING SYSTEM DATA</div>
+        <div style="margin-top: 25px; text-align: center; max-width: 500px; padding: 0 20px;">
+            <h3 style="color: var(--text-primary); margin-bottom: 15px;">Sidney Apparels OPS v17.0</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6;">
+                Welcome to the Operator Performance System. Track operator efficiency, conduct time studies, 
+                and analyze manufacturing performance.
+            </p>
+        </div>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <div class="mobile-menu-toggle" id="mobileMenuToggle">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-industry"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>SIDNEY APPARELS LLC</h1>
+                    <h2>MANUFACTURING EXCELLENCE</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar-nav">
+            <div class="nav-item active" data-tab="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard & Analysis</span>
+            </div>
+            <div class="nav-item" data-tab="operators">
+                <i class="fas fa-users"></i>
+                <span>Operators</span>
+            </div>
+            <div class="nav-item" data-tab="performance">
+                <i class="fas fa-chart-bar"></i>
+                <span>Performance Data</span>
+            </div>
+            <div class="nav-item" data-tab="time-study">
+                <i class="fas fa-stopwatch"></i>
+                <span>Time Study</span>
+            </div>
+            <div class="nav-item" data-tab="grading-criteria">
+                <i class="fas fa-grip"></i>
+                <span>Grading Criteria</span>
+            </div>
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="current-time" id="sidebarCurrentTime">--:--:--</div>
+            <div class="last-updated" id="sidebarLastUpdated">--/--/----</div>
+        </div>
+    </div>
+
+    <!-- Main content area -->
+    <div class="main-content-area">
+        <!-- Simplified Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-info">
+                    <div class="info-item">
+                        <i class="fas fa-database"></i>
+                        <div class="info-item-content">
+                            <div class="info-label">DATA VERSION</div>
+                            <div class="info-value">v17.0</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-sync-alt"></i>
+                        <div class="info-item-content">
+                            <div class="info-label">LAST SYNC</div>
+                            <div class="info-value" id="headerLastSync">--:--:--</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-users"></i>
+                        <div class="info-item-content">
+                            <div class="info-label">TOTAL OPERATORS</div>
+                            <div class="info-value" id="headerTotalOps">0</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-industry"></i>
+                        <div class="info-item-content">
+                            <div class="info-label">ACTIVE LINES</div>
+                            <div class="info-value" id="headerActiveLines">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Tab - UPDATED v17 -->
+        <div id="dashboard" class="tab-content active">
+            <div class="controls-panel">
+                <div class="search-filter">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="dashboardSearch" placeholder="Search across all data...">
+                    </div>
+                    <div class="filter-options">
+                        <select id="dashboardLineFilter">
+                            <option value="">All Lines</option>
+                        </select>
+                        <select id="dashboardDateRange">
+                            <option value="today">Today</option>
+                            <option value="week" selected>This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="refreshDashboardBtn" class="btn btn-info">
+                        <i class="fas fa-sync-alt"></i> Refresh Dashboard
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Scrollable Container -->
+            <div class="dashboard-scrollable">
+                <!-- UPDATED v17: New Dashboard Grid with Consistent Card Sizes -->
+                <div class="dashboard-grid-v17">
+                    <!-- Total Operators Card -->
+                    <div class="dashboard-card total-operators-card clickable" id="dashboardTotalOperatorsCard">
+                        <h3><i class="fas fa-users"></i> Total Operators</h3>
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 3rem; font-weight: 700; margin-bottom: 10px; color: var(--primary-color);" id="dashboardTotalOperators">0</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Active Operators</div>
+                            </div>
+                        </div>
+                        <div class="line-selector">
+                            <select id="dashboardLineSelect">
+                                <option value="">All Lines</option>
+                            </select>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+                                Click to view all operators in the system
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skill Groups Container Card -->
+                    <div class="dashboard-card skill-groups-container-card">
+                        <h3><i class="fas fa-layer-group"></i> Skill Groups Distribution</h3>
+                        <div class="skill-groups-grid">
+                            <div class="skill-group-card group-a" id="dashboardGroupACard">
+                                <div class="count" id="dashboardGroupACount">0</div>
+                                <div class="label">Group A</div>
+                                <div class="description">Grade A Operators</div>
+                            </div>
+                            <div class="skill-group-card group-b" id="dashboardGroupBCard">
+                                <div class="count" id="dashboardGroupBCount">0</div>
+                                <div class="label">Group B</div>
+                                <div class="description">Grade B Operators</div>
+                            </div>
+                            <div class="skill-group-card group-c" id="dashboardGroupCCard">
+                                <div class="count" id="dashboardGroupCCount">0</div>
+                                <div class="label">Group C</div>
+                                <div class="description">Grade C Operators</div>
+                            </div>
+                            <div class="skill-group-card group-d" id="dashboardGroupDCard">
+                                <div class="count" id="dashboardGroupDCount">0</div>
+                                <div class="label">Group D</div>
+                                <div class="description">Grade D Operators</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+                                Click on any group to view operators
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Metrics Card -->
+                    <div class="dashboard-card performance-metrics-card">
+                        <h3><i class="fas fa-chart-line"></i> Performance Metrics</h3>
+                        <div class="metrics-grid">
+                            <div class="metric-item efficiency">
+                                <div class="value" id="dashboardAvgEfficiency">0%</div>
+                                <div class="label">Avg Efficiency</div>
+                            </div>
+                            <div class="metric-item smv">
+                                <div class="value" id="dashboardAvgSMV">0.00</div>
+                                <div class="label">Avg SMV</div>
+                            </div>
+                            <div class="metric-item working-smv">
+                                <div class="value" id="dashboardAvgWorkingSMV">0.00</div>
+                                <div class="label">Avg Working SMV</div>
+                            </div>
+                            <div class="metric-item operations">
+                                <div class="value" id="dashboardTotalOperations">0</div>
+                                <div class="label">Total Operations</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                <span style="color: var(--text-secondary);">Active Lines:</span>
+                                <span style="font-weight: 600; color: var(--primary-color);" id="dashboardActiveLines">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Machine Usage Statistics Card -->
+                    <div class="dashboard-card machine-usage-card">
+                        <div class="stat-header">
+                            <h3><i class="fas fa-cogs"></i> Machine Usage Statistics</h3>
+                        </div>
+                        <div class="machine-usage-stats" id="dashboardMachineUsage">
+                            <div class="machine-usage-item">
+                                <span class="machine-name">Loading...</span>
+                                <span class="machine-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Combined SMV Card -->
+                    <div class="dashboard-card combined-smv-card">
+                        <h3><i class="fas fa-clock"></i> Standard vs Working SMV</h3>
+                        <div class="smv-values">
+                            <div class="smv-value standard">
+                                <div class="value" id="dashboardAvgStdSMV">0.00</div>
+                                <div class="label">Avg. Standard</div>
+                            </div>
+                            <div class="smv-value working">
+                                <div class="value" id="dashboardAvgWorkSMV">0.00</div>
+                                <div class="label">Avg. Working</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+                                Standard SMV vs Working SMV comparison
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skill Distribution Card -->
+                    <div class="dashboard-card skill-distribution-card">
+                        <h3><i class="fas fa-star"></i> Skill Distribution</h3>
+                        <div class="distribution-chart">
+                            <canvas id="skillDistributionChart" height="150"></canvas>
+                        </div>
+                        <div class="distribution-stats">
+                            <div class="skill-stat group-a">
+                                <div class="count" id="skillGroupACount">0</div>
+                                <div class="label">Group A</div>
+                            </div>
+                            <div class="skill-stat group-b">
+                                <div class="count" id="skillGroupBCount">0</div>
+                                <div class="label">Group B</div>
+                            </div>
+                            <div class="skill-stat group-c">
+                                <div class="count" id="skillGroupCCount">0</div>
+                                <div class="label">Group C</div>
+                            </div>
+                            <div class="skill-stat group-d">
+                                <div class="count" id="skillGroupDCount">0</div>
+                                <div class="label">Group D</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Garment Standard SMV Card -->
+                    <div class="dashboard-card garment-smv-card">
+                        <h3><i class="fas fa-ruler"></i> Garment Standard SMV</h3>
+                        <div class="garment-smv-selectors">
+                            <select id="standardSMVLineSelect">
+                                <option value="">Select Line</option>
+                            </select>
+                            <select id="standardSMVStyleSelect">
+                                <option value="">Select Style</option>
+                            </select>
+                        </div>
+                        <div class="garment-smv-value" id="totalStandardSMV">0.00</div>
+                        <div class="garment-smv-label">Total Standard SMV (minutes)</div>
+                    </div>
+
+                    <!-- Garment Working SMV Card -->
+                    <div class="dashboard-card garment-smv-card">
+                        <h3><i class="fas fa-ruler-combined"></i> Garment Working SMV</h3>
+                        <div class="garment-smv-selectors">
+                            <select id="workingSMVLineSelect">
+                                <option value="">Select Line</option>
+                            </select>
+                            <select id="workingSMVStyleSelect">
+                                <option value="">Select Style</option>
+                            </select>
+                        </div>
+                        <div class="garment-smv-value" id="totalWorkingSMV">0.00</div>
+                        <div class="garment-smv-label">Total Working SMV (minutes)</div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="analysis-charts">
+                    <div class="chart-card">
+                        <h4><i class="fas fa-chart-pie"></i> Efficiency Distribution</h4>
+                        <canvas id="efficiencyChart" height="250"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4><i class="fas fa-industry"></i> Line Performance</h4>
+                        <canvas id="linePerformanceChart" height="250"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4><i class="fas fa-cogs"></i> Machine Performance</h4>
+                        <canvas id="machinePerformanceChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Operators Tab - UPDATED v17 -->
+        <div id="operators" class="tab-content">
+            <div class="controls-panel">
+                <div class="search-filter">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search by Operator ID or Name...">
+                    </div>
+                    <div class="filter-options">
+                        <select id="skillFilter">
+                            <option value="">Filter by Skill Level...</option>
+                            <option value="Group A">Group A</option>
+                            <option value="Group B">Group B</option>
+                            <option value="Group C">Group C</option>
+                            <option value="Group D">Group D</option>
+                        </select>
+                        <select id="lineFilter">
+                            <option value="">Filter by Sew Line...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="addOperatorBtn" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Add Operator
+                    </button>
+                    <button id="editExistingDetailsBtn" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit Existing Details
+                    </button>
+                    <button id="saveBtn" class="btn btn-warning">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <button id="refreshBtn" class="btn btn-info">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable operators list -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h3><i class="fas fa-table"></i> OPERATORS MASTER LIST</h3>
+                </div>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>OPERATOR ID</th>
+                                <th>OPERATOR NAME</th>
+                                <th>CURRENT SEW LINE</th>
+                                <th>SKILL LEVEL</th>
+                                <th>SKILL SCORE</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="operatorsBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Data Tab - UPDATED v17: Action buttons in Actions column -->
+        <div id="performance" class="tab-content">
+            <div class="controls-panel">
+                <div class="search-filter">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchPerformance" placeholder="Search by Operator ID, Name or Style...">
+                    </div>
+                    <div class="filter-options">
+                        <select id="perfLineFilter">
+                            <option value="">Filter by Line...</option>
+                        </select>
+                        <select id="dateFilter">
+                            <option value="">Filter by Date...</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="addPerformanceBtn" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i> Add Performance Record
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3><i class="fas fa-chart-line"></i> PERFORMANCE RECORDS</h3>
+                </div>
+                <div class="performance-table-wrapper">
+                    <table class="performance-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Line No</th>
+                                <th>Style No</th>
+                                <th>Product Desc</th>
+                                <th>Operator ID</th>
+                                <th>Operator Name</th>
+                                <th>Operation</th>
+                                <th>Machine</th>
+                                <th>Other Machines</th>
+                                <th>Std SMV</th>
+                                <th>Working SMV</th>
+                                <th>Efficiency</th>
+                                <th>Other Machine Efficiency</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="performanceBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Study Tab - UPDATED v17: Complete machine list -->
+        <div id="time-study" class="tab-content">
+            <div class="stopwatch-container">
+                <h3><i class="fas fa-stopwatch"></i> Time Study & SAM Calculation</h3>
+                <p class="subtitle">Record lap times to calculate average time and efficiency (includes machine-specific allowances)</p>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studyOperatorId">Operator ID *</label>
+                        <select id="studyOperatorId" required>
+                            <option value="">Select Operator</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="studyLineNo">Line No *</label>
+                        <input type="text" id="studyLineNo" list="lineNoList" required placeholder="Enter or select line number">
+                        <datalist id="lineNoList">
+                            <!-- Options will be populated dynamically -->
+                        </datalist>
+                    </div>
+                    <div class="form-group">
+                        <label for="studyStyleNo">Style No (Running) *</label>
+                        <input type="text" id="studyStyleNo" required placeholder="Enter style number">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studyProductDesc">Product Description *</label>
+                        <input type="text" id="studyProductDesc" required placeholder="Enter product description">
+                    </div>
+                    <div class="form-group">
+                        <label for="studyOperation">Operation Name *</label>
+                        <input type="text" id="studyOperation" required placeholder="e.g., Hemming">
+                    </div>
+                    <div class="form-group">
+                        <label for="studyMachine">Machine Name *</label>
+                        <select id="studyMachine" required>
+                            <option value="">Select Machine</option>
+                            <option value="FLATLOCK_CYLINDER_BED_FABRIC_CUTTER_MACHINE">FLATLOCK CYLINDER BED FABRIC CUTTER MACHINE</option>
+                            <option value="5_HEAD_HEAT_TRANSFER_PRESS_MACHINE">5-HEAD HEAT TRANSFER PRESS MACHINE</option>
+                            <option value="AUTO_POCKET_HEM_MACHINE">AUTO POCKET HEM MACHINE</option>
+                            <option value="AUTO_POCKET_WELT_MACHINE">AUTO POCKET WELT MACHINE</option>
+                            <option value="AUTO_RIVET_MACHINE">AUTO RIVET MACHINE</option>
+                            <option value="AUTOMATIC_BELT_LOOP_ATTACH_MACHINE">AUTOMATIC BELT LOOP ATTACH MACHINE</option>
+                            <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING_MACHINES">AUTOMATIC FLAT BOTTOM HEMMING MACHINES</option>
+                            <option value="AUTOMATIC_LABEL_ASSEMBLY_MACHINE">AUTOMATIC LABEL ASSEMBLY MACHINE</option>
+                            <option value="AUTOMATIC_LABEL_FIXING_MACHINE">AUTOMATIC LABEL FIXING MACHINE</option>
+                            <option value="AUTOMATIC_POCKET_FACING_STITCHING_MACHINE">AUTOMATIC POCKET FACING STITCHING MACHINE</option>
+                            <option value="AUTOMATIC_POCKET_SETTER_MACHINE">AUTOMATIC POCKET SETTER MACHINE</option>
+                            <option value="AUTOMATIC_STRING_THRUSTING_MACHINE">AUTOMATIC STRING THRUSTING MACHINE</option>
+                            <option value="BARTACKING_MACHINE">BARTACKING MACHINE</option>
+                            <option value="BLIND_HEM_MACHINE">BLIND HEM MACHINE</option>
+                            <option value="BLIND_LOOP_MAKING_MACHINE">BLIND LOOP MAKING MACHINE</option>
+                            <option value="BOTTOM_HEM_MACHINE">BOTTOM HEM MACHINE</option>
+                            <option value="BUTTON_ATTACH_MACHINE">BUTTON ATTACH MACHINE</option>
+                            <option value="DOUBLE_NEEDLE_CHAIN_STITCH_MACHINE">DOUBLE NEEDLE CHAIN STITCH MACHINE</option>
+                            <option value="DOUBLE_NEEDLE_LOCK_STITCH_MACHINE">DOUBLE NEEDLE LOCK STITCH MACHINE</option>
+                            <option value="DOUBLE_NEEDLE_SPLIT_BAR_MACHINE">DOUBLE NEEDLE SPLIT BAR MACHINE</option>
+                            <option value="EYELET_BUTTONHOLING_MACHINE">EYELET BUTTONHOLING MACHINE</option>
+                            <option value="FEED_OF_ARM_MACHINE">FEED OF ARM MACHINE</option>
+                            <option value="FLATLOCK_CYLINDER_BED_MACHINE">FLATLOCK CYLINDER BED MACHINE</option>
+                            <option value="FLATLOCK_BABY_CYLINDER_BED_MACHINE">FLATLOCK BABY CYLINDER BED MACHINE</option>
+                            <option value="FLATLOCK_CYLINDERBED_ELASTIC_ATTACH_MACHINE">FLATLOCK CYLINDERBED ELASTIC ATTACH MACHINE</option>
+                            <option value="FLATLOCK_FLATBED_MACHINE">FLATLOCK FLATBED MACHINE</option>
+                            <option value="FLATLOCK_FLATBED_TOP_FEED_MACHINE">FLATLOCK FLATBED TOP FEED MACHINE</option>
+                            <option value="FLATSEAMER_MACHINE">FLATSEAMER MACHINE</option>
+                            <option value="HANG_TAG_STRING_INSERTION_MACHINE">HANG TAG STRING INSERTION MACHINE</option>
+                            <option value="HEAT_TRANSFER_PRESS_MACHINE">HEAT TRANSFER PRESS MACHINE</option>
+                            <option value="INSEAM_IRON">INSEAM IRON</option>
+                            <option value="IRON_TABLE">IRON TABLE</option>
+                            <option value="MINI_PATTERN_SEAMER_MACHINE">MINI PATTERN SEAMER MACHINE</option>
+                            <option value="MULTI_NEEDLE_MACHINE">MULTI NEEDLE MACHINE</option>
+                            <option value="NORMAL_BUTTON_HOLE_MACHINE">NORMAL BUTTON HOLE MACHINE</option>
+                            <option value="OVERLOCK_CUFF_ATTACH_MACHINE">OVERLOCK CUFF ATTACH MACHINE</option>
+                            <option value="OVERLOCK_CYLINDER_BED_MACHINE">OVERLOCK CYLINDER BED MACHINE</option>
+                            <option value="OVERLOCK_MACHINE">OVERLOCK MACHINE</option>
+                            <option value="OVERLOCK_MACHINE_AND_BACK_LATCH_STITCH">OVERLOCK MACHINE AND BACK LATCH STITCH</option>
+                            <option value="OVERLOCK_NECK_RIB_ATTACH_MACHINE">OVERLOCK NECK RIB ATTACH MACHINE</option>
+                            <option value="PATTERN_SEWER_MACHINE">PATTERN SEWER MACHINE</option>
+                            <option value="POLO_SHIRT_PLACKET_AUTOMATION_MACHINE">POLO SHIRT PLACKET AUTOMATION MACHINE</option>
+                            <option value="QUILTING_MACHINE">QUILTING MACHINE</option>
+                            <option value="SINGLE_NEEDLE_EDGE_CUTTER_MACHINE">SINGLE NEEDLE EDGE CUTTER MACHINE</option>
+                            <option value="SINGLE_NEEDLE_FEED_MACHINE">SINGLE NEEDLE FEED MACHINE</option>
+                            <option value="SINGLE_NEEDLE_LOCK_STITCH_MACHINE">SINGLE NEEDLE LOCK STITCH MACHINE</option>
+                            <option value="SNAP_ATTACH_MACHINE">SNAP ATTACH MACHINE</option>
+                            <option value="ZIGZAG_STITCH_MACHINE">ZIGZAG STITCH MACHINE</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row" id="customMachineRow" style="display: none;">
+                    <div class="form-group">
+                        <label for="customMachineName">Custom Machine Name *</label>
+                        <input type="text" id="customMachineName" placeholder="Enter custom machine name">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="standardSMV">Standard SMV (Minutes) *</label>
+                        <input type="number" id="standardSMV" step="0.01" required placeholder="e.g., 0.45">
+                    </div>
+                    <div class="form-group">
+                        <label for="studyOtherMachines">Other Machines Used</label>
+                        <div class="multi-select" id="otherMachinesSelect">
+                            <div class="multi-select-display">
+                                <span>Select machines...</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="multi-select-options" id="otherMachinesOptions">
+                                <!-- Machine options will be populated dynamically from full machine list -->
+                            </div>
+                            <div class="selected-options" id="selectedOtherMachines">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Allowance Information Display -->
+                <div class="edit-info" id="allowanceInfo" style="margin-top: 15px; display: none;">
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;"><i class="fas fa-calculator"></i> Allowance Breakdown</h4>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Personal Allowance</div>
+                            <div style="font-weight: 600; color: var(--success-color);" id="personalAllowanceDisplay">11%</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Contingency Allowance</div>
+                            <div style="font-weight: 600; color: var(--warning-color);" id="contingencyAllowanceDisplay">2%</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Machine Allowance</div>
+                            <div style="font-weight: 600; color: var(--primary-color);" id="machineAllowanceDisplay">0%</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Total Allowance:</div>
+                            <div style="font-weight: 700; color: var(--accent-color);" id="totalAllowanceDisplay">13%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Single Stopwatch with manual cycle input option -->
+                <h4 style="margin-top: 20px; margin-bottom: 15px; color: var(--text-primary);">Cycle Time Measurement</h4>
+                <div class="cycle-options">
+                    <label>
+                        <input type="radio" name="cycleCount" value="3" checked> 3 Cycles
+                    </label>
+                    <label>
+                        <input type="radio" name="cycleCount" value="5"> 5 Cycles
+                    </label>
+                    <label>
+                        <input type="radio" name="cycleCount" value="manual"> Manual Input
+                    </label>
+                </div>
+                
+                <div class="single-stopwatch">
+                    <div class="stopwatch-display-container">
+                        <div class="stopwatch-main" id="stopwatchDisplay">00:00:00.000</div>
+                        <div class="stopwatch-lap" id="lapDisplay">Lap: 00:00:00.000</div>
+                    </div>
+                    
+                    <div class="stopwatch-controls">
+                        <button class="stopwatch-btn stopwatch-btn-start" id="startBtn">
+                            <i class="fas fa-play"></i> Start
+                        </button>
+                        <button class="stopwatch-btn stopwatch-btn-stop" id="stopBtn" disabled>
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                        <button class="stopwatch-btn stopwatch-btn-lap" id="lapBtn" disabled>
+                            <i class="fas fa-stopwatch"></i> Lap
+                        </button>
+                        <button class="stopwatch-btn stopwatch-btn-lap" id="resetBtn">
+                            <i class="fas fa-redo"></i> Reset
+                        </button>
+                    </div>
+                    
+                    <!-- Manual Cycle Time Input -->
+                    <div class="manual-cycle-inputs" id="manualCycleInputs" style="display: none;">
+                        <h4><i class="fas fa-keyboard"></i> Enter Cycle Times Manually</h4>
+                        <div class="cycle-input-grid" id="manualCycleGrid">
+                            <div class="cycle-input-group">
+                                <label>Cycle 1 (seconds)</label>
+                                <input type="number" class="manual-cycle-time" step="0.001" placeholder="e.g., 25.345">
+                            </div>
+                            <div class="cycle-input-group">
+                                <label>Cycle 2 (seconds)</label>
+                                <input type="number" class="manual-cycle-time" step="0.001" placeholder="e.g., 26.123">
+                            </div>
+                            <div class="cycle-input-group">
+                                <label>Cycle 3 (seconds)</label>
+                                <input type="number" class="manual-cycle-time" step="0.001" placeholder="e.g., 24.987">
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button id="addManualCycleBtn" class="btn btn-secondary">
+                                <i class="fas fa-plus"></i> Add More Cycles
+                            </button>
+                            <button id="calculateManualBtn" class="btn btn-primary">
+                                <i class="fas fa-calculator"></i> Calculate
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="laps-container">
+                        <div class="laps-header">
+                            <div>Cycle #</div>
+                            <div>Time (sec)</div>
+                        </div>
+                        <div id="lapsList">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Results with machine-specific allowance -->
+                <div class="cycle-results">
+                    <h4 style="color: var(--primary-color);"><i class="fas fa-calculator"></i> Calculation Results (with machine-specific allowances)</h4>
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <div class="result-value" id="avgCycleTime">0.00</div>
+                            <div class="result-label">Avg Cycle Time (sec)</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-value" id="totalCycleTime">0.00</div>
+                            <div class="result-label">Total Time (sec)</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-value" id="workingSMVResult">0.00</div>
+                            <div class="result-label">Working SMV (min)</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-value" id="efficiencyResult">0%</div>
+                            <div class="result-label">Efficiency</div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button id="resetStopwatch" class="btn btn-danger">
+                            <i class="fas fa-redo"></i> Reset All
+                        </button>
+                        <button id="savePerformanceData" class="btn btn-success">
+                            <i class="fas fa-save"></i> Save Performance Record
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grading Criteria Tab -->
+        <div id="grading-criteria" class="tab-content">
+            <div class="grading-criteria-content">
+                <div class="criteria-section">
+                    <h3><i class="fas fa-users"></i> Multi-Skills Classification</h3>
+                    <div class="criteria-grid">
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-star" style="color: var(--success-color);"></i> Grade A</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-a">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>3+ machine types</strong>
+                                        <div class="description">With at least 1 machine at A grade, others at B or C</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-a">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Multi-skilled high performer</strong>
+                                        <div class="description">Excellent versatility and efficiency across multiple operations</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-star" style="color: var(--primary-color);"></i> Grade B</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-b">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>2+ machine types</strong>
+                                        <div class="description">With at least 1 machine at B grade, the other at C</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-b">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Good performer with multiple skills</strong>
+                                        <div class="description">Reliable performance across 2-3 operations</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-star" style="color: var(--warning-color);"></i> Grade C</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-c">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>2 machine types</strong>
+                                        <div class="description">Both machines at C grade</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-c">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Basic multi-skill operator</strong>
+                                        <div class="description">Developing skills on 2 operations</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-star" style="color: var(--accent-color);"></i> Grade D</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-d">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>1 machine type</strong>
+                                        <div class="description">Only manual operations, but can handle 1 machine at D grade</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-d">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Developing skill set</strong>
+                                        <div class="description">Entry-level operator learning basic operations</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="criteria-section">
+                    <h3><i class="fas fa-chart-line"></i> Skills Index Criteria</h3>
+                    <div class="criteria-grid">
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-award" style="color: var(--success-color);"></i> Skill Level A</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-a">
+                                        <i class="fas fa-cogs"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>3 machines, 3 operations</strong>
+                                        <div class="description">Versatile across multiple operations</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-a">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>0-2% WFT</strong>
+                                        <div class="description">Wrong First Time (Quality metric)</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-a">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>60%+ efficiency</strong>
+                                        <div class="description">Excellent performance on machine</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-award" style="color: var(--primary-color);"></i> Skill Level B</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-b">
+                                        <i class="fas fa-cogs"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>2 machines, 3 operations</strong>
+                                        <div class="description">Good operational range</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-b">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>2.5-3% WFT</strong>
+                                        <div class="description">Wrong First Time (Quality metric)</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-b">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>55%+ efficiency</strong>
+                                        <div class="description">Good performance on machine</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-award" style="color: var(--warning-color);"></i> Skill Level C</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-c">
+                                        <i class="fas fa-cogs"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>2 machines, 2 operations</strong>
+                                        <div class="description">Basic operational capability</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-c">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>3.5-5% WFT</strong>
+                                        <div class="description">Wrong First Time (Quality metric)</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-c">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>50%+ efficiency</strong>
+                                        <div class="description">Basic performance on machine</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-award" style="color: var(--accent-color);"></i> Skill Level D</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-d">
+                                        <i class="fas fa-cogs"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>1 machine, 2 operations</strong>
+                                        <div class="description">Limited operational scope</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-d">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>5.5%+ WFT</strong>
+                                        <div class="description">Wrong First Time (Quality metric)</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-d">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>50% efficiency</strong>
+                                        <div class="description">Entry level on machine</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="criteria-section">
+                    <h3><i class="fas fa-chart-bar"></i> Efficiency Classification</h3>
+                    <div class="criteria-grid">
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-arrow-up" style="color: var(--success-color);"></i> High Efficiency</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-a">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>≥85% Efficiency</strong>
+                                        <div class="description">Exceeds expectations - Top performer</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-a">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Performance Rating</strong>
+                                        <div class="description">Consistently exceeds targets</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-equals" style="color: var(--primary-color);"></i> Medium Efficiency</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-b">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>70-85% Efficiency</strong>
+                                        <div class="description">Meets expectations - Reliable performer</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-b">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Performance Rating</strong>
+                                        <div class="description">Consistently meets targets</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="criteria-card">
+                            <h4><i class="fas fa-arrow-down" style="color: var(--warning-color);"></i> Low Efficiency</h4>
+                            <div class="criteria-details">
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-c">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>&lt;70% Efficiency</strong>
+                                        <div class="description">Needs improvement - Requires training</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon group-c">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Performance Rating</strong>
+                                        <div class="description">Below target, needs attention</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2025 Sidney Apparels LLC - Manufacturing Excellence</p>
+            <div class="footer-credit">Made by Shantanu in HTML - Version 17.0</div>
+            <div class="footer-stats">
+                <div class="footer-stat">
+                    <i class="fas fa-database"></i>
+                    <span>Data Version: <strong id="dataVersion">17.0.0</strong></span>
+                </div>
+                <div class="footer-stat">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Last Sync: <strong id="lastSync">--:--:--</strong></span>
+                </div>
+                <div class="footer-stat">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure Connection: <strong>Active</strong></span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Add Operator Modal -->
+    <div id="addOperatorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Add New Operator</h3>
+                <span class="close-modal" data-modal="addOperatorModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addOperatorForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newOperatorId">Operator ID *</label>
+                            <input type="text" id="newOperatorId" required placeholder="e.g., OP-435264">
+                        </div>
+                        <div class="form-group">
+                            <label for="newOperatorName">Operator Name *</label>
+                            <input type="text" id="newOperatorName" required placeholder="Full name">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newSewLine">Current Sew Line *</label>
+                            <select id="newSewLine" required>
+                                <option value="">Select Sew Line</option>
+                                <option value="S-01">S-01</option>
+                                <option value="S-01A">S-01A</option>
+                                <option value="S-02">S-02</option>
+                                <option value="S-03">S-03</option>
+                                <option value="S-04">S-04</option>
+                                <option value="S-05">S-05</option>
+                                <option value="S-06">S-06</option>
+                                <option value="S-07">S-07</option>
+                                <option value="S-07A">S-07A</option>
+                                <option value="S-08">S-08</option>
+                                <option value="S-09">S-09</option>
+                                <option value="S-10">S-10</option>
+                                <option value="S-11">S-11</option>
+                                <option value="S-12">S-12</option>
+                                <option value="S-13">S-13</option>
+                                <option value="S-14">S-14</option>
+                                <option value="S-15">S-15</option>
+                                <option value="S-16">S-16</option>
+                                <option value="S-17">S-17</option>
+                                <option value="S-18">S-18</option>
+                                <option value="S-19">S-19</option>
+                                <option value="S-20">S-20</option>
+                                <option value="S-21">S-21</option>
+                                <option value="S-22">S-22</option>
+                                <option value="S-23">S-23</option>
+                                <option value="S-24">S-24</option>
+                                <option value="S-25">S-25</option>
+                                <option value="S-26">S-26</option>
+                                <option value="S-28">S-28</option>
+                                <option value="S-29">S-29</option>
+                                <option value="S-30">S-30</option>
+                                <option value="S-31">S-31</option>
+                                <option value="S-32">S-32</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="newSkillLevel">Initial Skill Level</label>
+                            <select id="newSkillLevel">
+                                <option value="">Select Level</option>
+                                <option value="Group A">Group A</option>
+                                <option value="Group B">Group B</option>
+                                <option value="Group C">Group C</option>
+                                <option value="Group D">Group D</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-modal="addOperatorModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Operator</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Skill Score Modal -->
+    <div id="editCellModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Operator Details</h3>
+                <span class="close-modal" data-modal="editCellModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="edit-info">
+                    <p><strong>Operator ID:</strong> <span id="editOperatorId"></span></p>
+                    <p><strong>Operator Name:</strong> <span id="editOperatorName"></span></p>
+                </div>
+                <form id="editCellForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editSewLine">Current Sew Line</label>
+                            <select id="editSewLine">
+                                <option value="">Select Sew Line</option>
+                                <option value="S-01">S-01</option>
+                                <option value="S-01A">S-01A</option>
+                                <option value="S-02">S-02</option>
+                                <option value="S-03">S-03</option>
+                                <option value="S-04">S-04</option>
+                                <option value="S-05">S-05</option>
+                                <option value="S-06">S-06</option>
+                                <option value="S-07">S-07</option>
+                                <option value="S-07A">S-07A</option>
+                                <option value="S-08">S-08</option>
+                                <option value="S-09">S-09</option>
+                                <option value="S-10">S-10</option>
+                                <option value="S-11">S-11</option>
+                                <option value="S-12">S-12</option>
+                                <option value="S-13">S-13</option>
+                                <option value="S-14">S-14</option>
+                                <option value="S-15">S-15</option>
+                                <option value="S-16">S-16</option>
+                                <option value="S-17">S-17</option>
+                                <option value="S-18">S-18</option>
+                                <option value="S-19">S-19</option>
+                                <option value="S-20">S-20</option>
+                                <option value="S-21">S-21</option>
+                                <option value="S-22">S-22</option>
+                                <option value="S-23">S-23</option>
+                                <option value="S-24">S-24</option>
+                                <option value="S-25">S-25</option>
+                                <option value="S-26">S-26</option>
+                                <option value="S-28">S-28</option>
+                                <option value="S-29">S-29</option>
+                                <option value="S-30">S-30</option>
+                                <option value="S-31">S-31</option>
+                                <option value="S-32">S-32</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editSkillLevel">Skill Level</label>
+                            <select id="editSkillLevel">
+                                <option value="Group A">Group A</option>
+                                <option value="Group B">Group B</option>
+                                <option value="Group C">Group C</option>
+                                <option value="Group D">Group D</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editSkillScore">Skill Score (0.0 - 1.0)</label>
+                        <input type="number" id="editSkillScore" min="0" max="1" step="0.05" required placeholder="e.g., 0.85">
+                        <div class="score-slider">
+                            <input type="range" id="scoreSlider" min="0" max="100" value="0">
+                            <div class="slider-labels">
+                                <span>0.0</span>
+                                <span>0.5</span>
+                                <span>1.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-modal="editCellModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Performance Details Modal - COMPLETELY REDESIGNED for v17 -->
+    <div id="editPerformanceDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Performance Details</h3>
+                <span class="close-modal" data-modal="editPerformanceDetailsModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="edit-info" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Operator ID</div>
+                        <div style="font-weight: 700; color: var(--primary-color);" id="editPerfOperatorId">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Operator Name</div>
+                        <div style="font-weight: 700; color: var(--text-primary);" id="editPerfOperatorName">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Current Grade</div>
+                        <div style="font-weight: 700;" id="editPerfCurrentSkill">-</div>
+                    </div>
+                </div>
+                
+                <h4 style="margin: 0 0 20px 0; color: var(--primary-color); padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <i class="fas fa-cogs"></i> Primary Machine & Operation Details
+                </h4>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editPerfOperation">Operation Name</label>
+                        <input type="text" id="editPerfOperation" placeholder="e.g., Hemming">
+                    </div>
+                    <div class="form-group">
+                        <label for="editPerfMachine">Primary Machine</label>
+                        <select id="editPerfMachine">
+                            <option value="">Select Primary Machine</option>
+                            <option value="FLATLOCK_CYLINDER_BED_FABRIC_CUTTER_MACHINE">FLATLOCK CYLINDER BED FABRIC CUTTER MACHINE</option>
+                            <option value="5_HEAD_HEAT_TRANSFER_PRESS_MACHINE">5-HEAD HEAT TRANSFER PRESS MACHINE</option>
+                            <option value="AUTO_POCKET_HEM_MACHINE">AUTO POCKET HEM MACHINE</option>
+                            <option value="AUTO_POCKET_WELT_MACHINE">AUTO POCKET WELT MACHINE</option>
+                            <option value="AUTO_RIVET_MACHINE">AUTO RIVET MACHINE</option>
+                            <option value="AUTOMATIC_BELT_LOOP_ATTACH_MACHINE">AUTOMATIC BELT LOOP ATTACH MACHINE</option>
+                            <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING_MACHINES">AUTOMATIC FLAT BOTTOM HEMMING MACHINES</option>
+                            <option value="AUTOMATIC_LABEL_ASSEMBLY_MACHINE">AUTOMATIC LABEL ASSEMBLY MACHINE</option>
+                            <option value="AUTOMATIC_LABEL_FIXING_MACHINE">AUTOMATIC LABEL FIXING MACHINE</option>
+                            <option value="AUTOMATIC_POCKET_FACING_STITCHING_MACHINE">AUTOMATIC POCKET FACING STITCHING MACHINE</option>
+                            <option value="AUTOMATIC_POCKET_SETTER_MACHINE">AUTOMATIC POCKET SETTER MACHINE</option>
+                            <option value="AUTOMATIC_STRING_THRUSTING_MACHINE">AUTOMATIC STRING THRUSTING MACHINE</option>
+                            <option value="BARTACKING_MACHINE">BARTACKING MACHINE</option>
+                            <option value="BLIND_HEM_MACHINE">BLIND HEM MACHINE</option>
+                            <option value="BLIND_LOOP_MAKING_MACHINE">BLIND LOOP MAKING MACHINE</option>
+                            <option value="BOTTOM_HEM_MACHINE">BOTTOM HEM MACHINE</option>
+                            <option value="BUTTON_ATTACH_MACHINE">BUTTON ATTACH MACHINE</option>
+                            <option value="DOUBLE_NEEDLE_CHAIN_STITCH_MACHINE">DOUBLE NEEDLE CHAIN STITCH MACHINE</option>
+                            <option value="DOUBLE_NEEDLE_LOCK_STITCH_MACHINE">DOUBLE NEEDLE LOCK STITCH MACHINE</option>
+                            <option value="DOUBLE_NEEDLE_SPLIT_BAR_MACHINE">DOUBLE NEEDLE SPLIT BAR MACHINE</option>
+                            <option value="EYELET_BUTTONHOLING_MACHINE">EYELET BUTTONHOLING MACHINE</option>
+                            <option value="FEED_OF_ARM_MACHINE">FEED OF ARM MACHINE</option>
+                            <option value="FLATLOCK_CYLINDER_BED_MACHINE">FLATLOCK CYLINDER BED MACHINE</option>
+                            <option value="FLATLOCK_BABY_CYLINDER_BED_MACHINE">FLATLOCK BABY CYLINDER BED MACHINE</option>
+                            <option value="FLATLOCK_CYLINDERBED_ELASTIC_ATTACH_MACHINE">FLATLOCK CYLINDERBED ELASTIC ATTACH MACHINE</option>
+                            <option value="FLATLOCK_FLATBED_MACHINE">FLATLOCK FLATBED MACHINE</option>
+                            <option value="FLATLOCK_FLATBED_TOP_FEED_MACHINE">FLATLOCK FLATBED TOP FEED MACHINE</option>
+                            <option value="FLATSEAMER_MACHINE">FLATSEAMER MACHINE</option>
+                            <option value="HANG_TAG_STRING_INSERTION_MACHINE">HANG TAG STRING INSERTION MACHINE</option>
+                            <option value="HEAT_TRANSFER_PRESS_MACHINE">HEAT TRANSFER PRESS MACHINE</option>
+                            <option value="INSEAM_IRON">INSEAM IRON</option>
+                            <option value="IRON_TABLE">IRON TABLE</option>
+                            <option value="MINI_PATTERN_SEAMER_MACHINE">MINI PATTERN SEAMER MACHINE</option>
+                            <option value="MULTI_NEEDLE_MACHINE">MULTI NEEDLE MACHINE</option>
+                            <option value="NORMAL_BUTTON_HOLE_MACHINE">NORMAL BUTTON HOLE MACHINE</option>
+                            <option value="OVERLOCK_CUFF_ATTACH_MACHINE">OVERLOCK CUFF ATTACH MACHINE</option>
+                            <option value="OVERLOCK_CYLINDER_BED_MACHINE">OVERLOCK CYLINDER BED MACHINE</option>
+                            <option value="OVERLOCK_MACHINE">OVERLOCK MACHINE</option>
+                            <option value="OVERLOCK_MACHINE_AND_BACK_LATCH_STITCH">OVERLOCK MACHINE AND BACK LATCH STITCH</option>
+                            <option value="OVERLOCK_NECK_RIB_ATTACH_MACHINE">OVERLOCK NECK RIB ATTACH MACHINE</option>
+                            <option value="PATTERN_SEWER_MACHINE">PATTERN SEWER MACHINE</option>
+                            <option value="POLO_SHIRT_PLACKET_AUTOMATION_MACHINE">POLO SHIRT PLACKET AUTOMATION MACHINE</option>
+                            <option value="QUILTING_MACHINE">QUILTING MACHINE</option>
+                            <option value="SINGLE_NEEDLE_EDGE_CUTTER_MACHINE">SINGLE NEEDLE EDGE CUTTER MACHINE</option>
+                            <option value="SINGLE_NEEDLE_FEED_MACHINE">SINGLE NEEDLE FEED MACHINE</option>
+                            <option value="SINGLE_NEEDLE_LOCK_STITCH_MACHINE">SINGLE NEEDLE LOCK STITCH MACHINE</option>
+                            <option value="SNAP_ATTACH_MACHINE">SNAP ATTACH MACHINE</option>
+                            <option value="ZIGZAG_STITCH_MACHINE">ZIGZAG STITCH MACHINE</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row" id="editPerfCustomMachineRow" style="display: none;">
+                    <div class="form-group">
+                        <label for="editPerfCustomMachineName">Custom Machine Name</label>
+                        <input type="text" id="editPerfCustomMachineName" placeholder="Enter custom machine name">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editPerfStdSMV">Standard SMV (min)</label>
+                        <input type="number" id="editPerfStdSMV" step="0.01" placeholder="e.g., 0.45">
+                    </div>
+                    <div class="form-group">
+                        <label for="editPerfWorkingSMV">Working SMV (min)</label>
+                        <input type="number" id="editPerfWorkingSMV" step="0.01" placeholder="e.g., 0.52">
+                    </div>
+                    <div class="form-group">
+                        <label for="editPerfEfficiency">Primary Efficiency (%)</label>
+                        <input type="number" id="editPerfEfficiency" min="0" max="200" step="0.1" placeholder="0-200%">
+                    </div>
+                </div>
+                
+                <!-- Other Machines Section - REDESIGNED for v17 -->
+                <h4 style="margin: 30px 0 20px 0; color: var(--primary-color); padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <i class="fas fa-list"></i> Other Machines & Efficiencies
+                    <small style="color: var(--text-secondary); font-weight: normal; margin-left: 10px;">(Add multiple machines with their respective efficiencies)</small>
+                </h4>
+                
+                <div id="editOtherMachineEfficiencies" style="margin-bottom: 20px;">
+                    <!-- Other machine items will be added here dynamically -->
+                </div>
+                
+                <div style="text-align: center; margin: 20px 0;">
+                    <button id="addOtherMachineBtn" class="btn btn-secondary" style="padding: 10px 20px;">
+                        <i class="fas fa-plus-circle"></i> Add Another Machine
+                    </button>
+                </div>
+                
+                <!-- Template for other machine row -->
+                <template id="otherMachineTemplate">
+                    <div class="other-machine-row" style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="flex: 2;">
+                                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Machine</div>
+                                <select class="other-machine-select" style="width: 100%; padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);">
+                                    <option value="">Select Machine</option>
+                                    <option value="FLATLOCK_CYLINDER_BED_FABRIC_CUTTER_MACHINE">FLATLOCK CYLINDER BED FABRIC CUTTER MACHINE</option>
+                                    <option value="5_HEAD_HEAT_TRANSFER_PRESS_MACHINE">5-HEAD HEAT TRANSFER PRESS MACHINE</option>
+                                    <option value="AUTO_POCKET_HEM_MACHINE">AUTO POCKET HEM MACHINE</option>
+                                    <option value="AUTO_POCKET_WELT_MACHINE">AUTO POCKET WELT MACHINE</option>
+                                    <option value="AUTO_RIVET_MACHINE">AUTO RIVET MACHINE</option>
+                                    <option value="AUTOMATIC_BELT_LOOP_ATTACH_MACHINE">AUTOMATIC BELT LOOP ATTACH MACHINE</option>
+                                    <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING_MACHINES">AUTOMATIC FLAT BOTTOM HEMMING MACHINES</option>
+                                    <option value="AUTOMATIC_LABEL_ASSEMBLY_MACHINE">AUTOMATIC LABEL ASSEMBLY MACHINE</option>
+                                    <option value="AUTOMATIC_LABEL_FIXING_MACHINE">AUTOMATIC LABEL FIXING MACHINE</option>
+                                    <option value="AUTOMATIC_POCKET_FACING_STITCHING_MACHINE">AUTOMATIC POCKET FACING STITCHING MACHINE</option>
+                                    <option value="AUTOMATIC_POCKET_SETTER_MACHINE">AUTOMATIC POCKET SETTER MACHINE</option>
+                                    <option value="AUTOMATIC_STRING_THRUSTING_MACHINE">AUTOMATIC STRING THRUSTING MACHINE</option>
+                                    <option value="BARTACKING_MACHINE">BARTACKING MACHINE</option>
+                                    <option value="BLIND_HEM_MACHINE">BLIND HEM MACHINE</option>
+                                    <option value="BLIND_LOOP_MAKING_MACHINE">BLIND LOOP MAKING MACHINE</option>
+                                    <option value="BOTTOM_HEM_MACHINE">BOTTOM HEM MACHINE</option>
+                                    <option value="BUTTON_ATTACH_MACHINE">BUTTON ATTACH MACHINE</option>
+                                    <option value="DOUBLE_NEEDLE_CHAIN_STITCH_MACHINE">DOUBLE NEEDLE CHAIN STITCH MACHINE</option>
+                                    <option value="DOUBLE_NEEDLE_LOCK_STITCH_MACHINE">DOUBLE NEEDLE LOCK STITCH MACHINE</option>
+                                    <option value="DOUBLE_NEEDLE_SPLIT_BAR_MACHINE">DOUBLE NEEDLE SPLIT BAR MACHINE</option>
+                                    <option value="EYELET_BUTTONHOLING_MACHINE">EYELET BUTTONHOLING MACHINE</option>
+                                    <option value="FEED_OF_ARM_MACHINE">FEED OF ARM MACHINE</option>
+                                    <option value="FLATLOCK_CYLINDER_BED_MACHINE">FLATLOCK CYLINDER BED MACHINE</option>
+                                    <option value="FLATLOCK_BABY_CYLINDER_BED_MACHINE">FLATLOCK BABY CYLINDER BED MACHINE</option>
+                                    <option value="FLATLOCK_CYLINDERBED_ELASTIC_ATTACH_MACHINE">FLATLOCK CYLINDERBED ELASTIC ATTACH MACHINE</option>
+                                    <option value="FLATLOCK_FLATBED_MACHINE">FLATLOCK FLATBED MACHINE</option>
+                                    <option value="FLATLOCK_FLATBED_TOP_FEED_MACHINE">FLATLOCK FLATBED TOP FEED MACHINE</option>
+                                    <option value="FLATSEAMER_MACHINE">FLATSEAMER MACHINE</option>
+                                    <option value="HANG_TAG_STRING_INSERTION_MACHINE">HANG TAG STRING INSERTION MACHINE</option>
+                                    <option value="HEAT_TRANSFER_PRESS_MACHINE">HEAT TRANSFER PRESS MACHINE</option>
+                                    <option value="INSEAM_IRON">INSEAM IRON</option>
+                                    <option value="IRON_TABLE">IRON TABLE</option>
+                                    <option value="MINI_PATTERN_SEAMER_MACHINE">MINI PATTERN SEAMER MACHINE</option>
+                                    <option value="MULTI_NEEDLE_MACHINE">MULTI NEEDLE MACHINE</option>
+                                    <option value="NORMAL_BUTTON_HOLE_MACHINE">NORMAL BUTTON HOLE MACHINE</option>
+                                    <option value="OVERLOCK_CUFF_ATTACH_MACHINE">OVERLOCK CUFF ATTACH MACHINE</option>
+                                    <option value="OVERLOCK_CYLINDER_BED_MACHINE">OVERLOCK CYLINDER BED MACHINE</option>
+                                    <option value="OVERLOCK_MACHINE">OVERLOCK MACHINE</option>
+                                    <option value="OVERLOCK_MACHINE_AND_BACK_LATCH_STITCH">OVERLOCK MACHINE AND BACK LATCH STITCH</option>
+                                    <option value="OVERLOCK_NECK_RIB_ATTACH_MACHINE">OVERLOCK NECK RIB ATTACH MACHINE</option>
+                                    <option value="PATTERN_SEWER_MACHINE">PATTERN SEWER MACHINE</option>
+                                    <option value="POLO_SHIRT_PLACKET_AUTOMATION_MACHINE">POLO SHIRT PLACKET AUTOMATION MACHINE</option>
+                                    <option value="QUILTING_MACHINE">QUILTING MACHINE</option>
+                                    <option value="SINGLE_NEEDLE_EDGE_CUTTER_MACHINE">SINGLE NEEDLE EDGE CUTTER MACHINE</option>
+                                    <option value="SINGLE_NEEDLE_FEED_MACHINE">SINGLE NEEDLE FEED MACHINE</option>
+                                    <option value="SINGLE_NEEDLE_LOCK_STITCH_MACHINE">SINGLE NEEDLE LOCK STITCH MACHINE</option>
+                                    <option value="SNAP_ATTACH_MACHINE">SNAP ATTACH MACHINE</option>
+                                    <option value="ZIGZAG_STITCH_MACHINE">ZIGZAG STITCH MACHINE</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Efficiency (%)</div>
+                                <input type="number" class="other-machine-efficiency" min="0" max="200" step="0.1" placeholder="0-200%" style="width: 100%; padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);">
+                            </div>
+                            <div style="display: flex; align-items: center; padding-top: 20px;">
+                                <button type="button" class="remove-other-machine" style="background: rgba(248, 37, 133, 0.1); border: 1px solid rgba(248, 37, 133, 0.3); color: var(--accent-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                
+                <div class="form-actions" style="margin-top: 25px;">
+                    <button type="button" class="btn btn-secondary" data-modal="editPerformanceDetailsModal" style="padding: 12px 24px;">Cancel</button>
+                    <button type="button" id="savePerformanceDetailsBtn" class="btn btn-primary" style="padding: 12px 24px;">Save All Performance Details</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group Operators Modal with search and sorting -->
+    <div id="groupOperatorsModal" class="modal group-operators-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-users"></i> <span id="groupModalTitle">Group A Operators</span></h3>
+                <span class="close-modal" data-modal="groupOperatorsModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="edit-info">
+                    <p><strong>Total Operators:</strong> <span id="groupOperatorCount">0</span></p>
+                    <p><strong>Average Efficiency:</strong> <span id="groupAvgEfficiency">0%</span></p>
+                    <p><strong>Skill Description:</strong> <span id="groupDescription"></span></p>
+                </div>
+                
+                <div class="search-filter" style="margin-bottom: 15px;">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="groupSearchInput" placeholder="Search within group...">
+                    </div>
+                    <div class="filter-options">
+                        <select id="groupSortBy">
+                            <option value="skillScore">Sort by: Skill Score</option>
+                            <option value="efficiency">Sort by: Efficiency</option>
+                            <option value="name">Sort by: Name</option>
+                            <option value="line">Sort by: Line</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="group-operators-list" id="groupOperatorsList" style="max-height: 400px; overflow-y: auto;">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" data-modal="groupOperatorsModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Performance Modal - UPDATED with complete machine list -->
+    <div id="addPerformanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-chart-line"></i> Add Performance Record</h3>
+                <span class="close-modal" data-modal="addPerformanceModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addPerformanceForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="perfOperatorId">Operator ID *</label>
+                            <select id="perfOperatorId" required>
+                                <option value="">Select Operator</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="perfLineNo">Line No *</label>
+                            <input type="text" id="perfLineNo" required placeholder="Enter line number">
+                        </div>
+                        <div class="form-group">
+                            <label for="perfStyleNo">Style No *</label>
+                            <input type="text" id="perfStyleNo" required placeholder="Enter style number">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="perfProductDesc">Product Description *</label>
+                            <input type="text" id="perfProductDesc" required placeholder="Enter product description">
+                        </div>
+                        <div class="form-group">
+                            <label for="perfOperation">Operation Name *</label>
+                            <input type="text" id="perfOperation" required placeholder="e.g., Hemming">
+                        </div>
+                        <div class="form-group">
+                            <label for="perfMachine">Machine Name *</label>
+                            <select id="perfMachine" required>
+                                <option value="">Select Machine</option>
+                                <option value="FLATLOCK_CYLINDER_BED_FABRIC_CUTTER_MACHINE">FLATLOCK CYLINDER BED FABRIC CUTTER MACHINE</option>
+                                <option value="5_HEAD_HEAT_TRANSFER_PRESS_MACHINE">5-HEAD HEAT TRANSFER PRESS MACHINE</option>
+                                <option value="AUTO_POCKET_HEM_MACHINE">AUTO POCKET HEM MACHINE</option>
+                                <option value="AUTO_POCKET_WELT_MACHINE">AUTO POCKET WELT MACHINE</option>
+                                <option value="AUTO_RIVET_MACHINE">AUTO RIVET MACHINE</option>
+                                <option value="AUTOMATIC_BELT_LOOP_ATTACH_MACHINE">AUTOMATIC BELT LOOP ATTACH MACHINE</option>
+                                <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING_MACHINES">AUTOMATIC FLAT BOTTOM HEMMING MACHINES</option>
+                                <option value="AUTOMATIC_LABEL_ASSEMBLY_MACHINE">AUTOMATIC LABEL ASSEMBLY MACHINE</option>
+                                <option value="AUTOMATIC_LABEL_FIXING_MACHINE">AUTOMATIC LABEL FIXING MACHINE</option>
+                                <option value="AUTOMATIC_POCKET_FACING_STITCHING_MACHINE">AUTOMATIC POCKET FACING STITCHING MACHINE</option>
+                                <option value="AUTOMATIC_POCKET_SETTER_MACHINE">AUTOMATIC POCKET SETTER MACHINE</option>
+                                <option value="AUTOMATIC_STRING_THRUSTING_MACHINE">AUTOMATIC STRING THRUSTING MACHINE</option>
+                                <option value="BARTACKING_MACHINE">BARTACKING MACHINE</option>
+                                <option value="BLIND_HEM_MACHINE">BLIND HEM MACHINE</option>
+                                <option value="BLIND_LOOP_MAKING_MACHINE">BLIND LOOP MAKING MACHINE</option>
+                                <option value="BOTTOM_HEM_MACHINE">BOTTOM HEM MACHINE</option>
+                                <option value="BUTTON_ATTACH_MACHINE">BUTTON ATTACH MACHINE</option>
+                                <option value="DOUBLE_NEEDLE_CHAIN_STITCH_MACHINE">DOUBLE NEEDLE CHAIN STITCH MACHINE</option>
+                                <option value="DOUBLE_NEEDLE_LOCK_STITCH_MACHINE">DOUBLE NEEDLE LOCK STITCH MACHINE</option>
+                                <option value="DOUBLE_NEEDLE_SPLIT_BAR_MACHINE">DOUBLE NEEDLE SPLIT BAR MACHINE</option>
+                                <option value="EYELET_BUTTONHOLING_MACHINE">EYELET BUTTONHOLING MACHINE</option>
+                                <option value="FEED_OF_ARM_MACHINE">FEED OF ARM MACHINE</option>
+                                <option value="FLATLOCK_CYLINDER_BED_MACHINE">FLATLOCK CYLINDER BED MACHINE</option>
+                                <option value="FLATLOCK_BABY_CYLINDER_BED_MACHINE">FLATLOCK BABY CYLINDER BED MACHINE</option>
+                                <option value="FLATLOCK_CYLINDERBED_ELASTIC_ATTACH_MACHINE">FLATLOCK CYLINDERBED ELASTIC ATTACH MACHINE</option>
+                                <option value="FLATLOCK_FLATBED_MACHINE">FLATLOCK FLATBED MACHINE</option>
+                                <option value="FLATLOCK_FLATBED_TOP_FEED_MACHINE">FLATLOCK FLATBED TOP FEED MACHINE</option>
+                                <option value="FLATSEAMER_MACHINE">FLATSEAMER MACHINE</option>
+                                <option value="HANG_TAG_STRING_INSERTION_MACHINE">HANG TAG STRING INSERTION MACHINE</option>
+                                <option value="HEAT_TRANSFER_PRESS_MACHINE">HEAT TRANSFER PRESS MACHINE</option>
+                                <option value="INSEAM_IRON">INSEAM IRON</option>
+                                <option value="IRON_TABLE">IRON TABLE</option>
+                                <option value="MINI_PATTERN_SEAMER_MACHINE">MINI PATTERN SEAMER MACHINE</option>
+                                <option value="MULTI_NEEDLE_MACHINE">MULTI NEEDLE MACHINE</option>
+                                <option value="NORMAL_BUTTON_HOLE_MACHINE">NORMAL BUTTON HOLE MACHINE</option>
+                                <option value="OVERLOCK_CUFF_ATTACH_MACHINE">OVERLOCK CUFF ATTACH MACHINE</option>
+                                <option value="OVERLOCK_CYLINDER_BED_MACHINE">OVERLOCK CYLINDER BED MACHINE</option>
+                                <option value="OVERLOCK_MACHINE">OVERLOCK MACHINE</option>
+                                <option value="OVERLOCK_MACHINE_AND_BACK_LATCH_STITCH">OVERLOCK MACHINE AND BACK LATCH STITCH</option>
+                                <option value="OVERLOCK_NECK_RIB_ATTACH_MACHINE">OVERLOCK NECK RIB ATTACH MACHINE</option>
+                                <option value="PATTERN_SEWER_MACHINE">PATTERN SEWER MACHINE</option>
+                                <option value="POLO_SHIRT_PLACKET_AUTOMATION_MACHINE">POLO SHIRT PLACKET AUTOMATION MACHINE</option>
+                                <option value="QUILTING_MACHINE">QUILTING MACHINE</option>
+                                <option value="SINGLE_NEEDLE_EDGE_CUTTER_MACHINE">SINGLE NEEDLE EDGE CUTTER MACHINE</option>
+                                <option value="SINGLE_NEEDLE_FEED_MACHINE">SINGLE NEEDLE FEED MACHINE</option>
+                                <option value="SINGLE_NEEDLE_LOCK_STITCH_MACHINE">SINGLE NEEDLE LOCK STITCH MACHINE</option>
+                                <option value="SNAP_ATTACH_MACHINE">SNAP ATTACH MACHINE</option>
+                                <option value="ZIGZAG_STITCH_MACHINE">ZIGZAG STITCH MACHINE</option>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row" id="perfCustomMachineRow" style="display: none;">
+                        <div class="form-group">
+                            <label for="perfCustomMachineName">Custom Machine Name *</label>
+                            <input type="text" id="perfCustomMachineName" placeholder="Enter custom machine name">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="perfStdSMV">Standard SMV (min) *</label>
+                            <input type="number" id="perfStdSMV" step="0.01" required placeholder="e.g., 0.45">
+                        </div>
+                        <div class="form-group">
+                            <label for="perfWorkingSMV">Operator Working SMV (min) *</label>
+                            <input type="number" id="perfWorkingSMV" step="0.01" required placeholder="e.g., 0.52">
+                        </div>
+                        <div class="form-group">
+                            <label for="perfOtherMachines">Other Machines Used</label>
+                            <div class="multi-select" id="perfOtherMachinesSelect">
+                                <div class="multi-select-display">
+                                    <span>Select machines...</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </div>
+                                <div class="multi-select-options" id="perfOtherMachinesOptions">
+                                    <!-- Machine options will be populated dynamically from full machine list -->
+                                </div>
+                                <div class="selected-options" id="perfSelectedOtherMachines">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-modal="addPerformanceModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Performance Data</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Working SMV Detail Modal -->
+    <div id="cycleDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-calculator"></i> Working SMV Breakdown</h3>
+                <span class="close-modal" data-modal="cycleDetailModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="cycle-info">
+                    <h4 style="margin-bottom: 15px;">Performance Details</h4>
+                    <div class="breakdown-grid">
+                        <div class="breakdown-item">
+                            <div class="value" id="detailOperatorName">-</div>
+                            <div class="label">Operator</div>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="value" id="detailOperation">-</div>
+                            <div class="label">Operation</div>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="value" id="detailStdSMV">0.00</div>
+                            <div class="label">Standard SMV (min)</div>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="value" id="detailWorkingSMV">0.00</div>
+                            <div class="label">Working SMV (min)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="smv-breakdown">
+                        <h4><i class="fas fa-calculator"></i> Calculation Formula</h4>
+                        <div class="formula-display">
+                            Working SMV = (Average Cycle Time in seconds ÷ 60) × (1 + Allowance%)<br>
+                            Where: Allowance = Personal (11%) + Contingency (2%) + Machine Allowance
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                        <div>
+                            <h4 style="color: var(--success-color); margin-bottom: 10px;">Efficiency</h4>
+                            <div style="font-size: 2rem; font-weight: 700; color: var(--success-color);" id="detailEfficiency">0%</div>
+                        </div>
+                        <div>
+                            <h4 style="color: var(--primary-color); margin-bottom: 10px;">Variance</h4>
+                            <div style="font-size: 2rem; font-weight: 700; color: var(--primary-color);" id="detailVariance">0%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h4 style="margin: 20px 0 10px 0;">Cycle Times (seconds)</h4>
+                <div class="cycle-times-list" id="cycleTimesList" style="max-height: 200px; overflow-y: auto;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Performance Record Modal -->
+    <div id="editPerformanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Edit Performance Record</h3>
+                <span class="close-modal" data-modal="editPerformanceModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="edit-info">
+                    <p><strong>Record ID:</strong> <span id="editRecordId"></span></p>
+                    <p><strong>Operator:</strong> <span id="editRecordOperator"></span></p>
+                </div>
+                <form id="editPerformanceForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editRecordStdSMV">Standard SMV (min)</label>
+                            <input type="number" id="editRecordStdSMV" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editRecordWorkingSMV">Working SMV (min)</label>
+                            <input type="number" id="editRecordWorkingSMV" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editRecordCycleTimes">Cycle Times (seconds, comma-separated)</label>
+                        <input type="text" id="editRecordCycleTimes" placeholder="e.g., 25.3, 26.1, 24.8">
+                        <small style="color: var(--text-secondary); display: block; margin-top: 5px;">
+                            Enter cycle times separated by commas. Changing these will recalculate Working SMV with machine-specific allowances.
+                        </small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-modal="editPerformanceModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Record</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notificationToast" class="toast">
+        <div class="toast-content">
+            <i class="fas fa-check-circle"></i>
+            <span id="toastMessage">Operation completed successfully!</span>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
