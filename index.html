@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sidney Apparels - Operator Performance System v17</title>
+    <title>Sidney Apparels - Operator Performance System v18</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
@@ -17,7 +17,7 @@
         <div class="loading-spinner"></div>
         <div class="loading-text">LOADING SYSTEM DATA</div>
         <div style="margin-top: 25px; text-align: center; max-width: 500px; padding: 0 20px;">
-            <h3 style="color: var(--text-primary); margin-bottom: 15px;">Sidney Apparels OPS v17.0</h3>
+            <h3 style="color: var(--text-primary); margin-bottom: 15px;">Sidney Apparels OPS v18.0</h3>
             <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6;">
                 Welcome to the Operator Performance System. Track operator efficiency, conduct time studies, 
                 and analyze manufacturing performance.
@@ -86,7 +86,7 @@
                         <i class="fas fa-database"></i>
                         <div class="info-item-content">
                             <div class="info-label">DATA VERSION</div>
-                            <div class="info-value">v17.0</div>
+                            <div class="info-value">v18.0</div>
                         </div>
                     </div>
                     <div class="info-item">
@@ -114,7 +114,7 @@
             </div>
         </header>
 
-        <!-- Dashboard Tab - UPDATED v17 -->
+        <!-- Dashboard Tab - UPDATED v18 -->
         <div id="dashboard" class="tab-content active">
             <div class="controls-panel">
                 <div class="search-filter">
@@ -143,10 +143,10 @@
 
             <!-- Dashboard Scrollable Container -->
             <div class="dashboard-scrollable">
-                <!-- UPDATED v17: New Dashboard Grid with Consistent Card Sizes -->
-                <div class="dashboard-grid-v17">
-                    <!-- Total Operators Card -->
-                    <div class="dashboard-card total-operators-card clickable" id="dashboardTotalOperatorsCard">
+                <!-- UPDATED v18: New Dashboard Grid with Consistent Card Sizes and 3 cards per row minimum -->
+                <div class="dashboard-grid-v18">
+                    <!-- Total Operators Card - UPDATED: Not clickable, with line dropdown -->
+                    <div class="dashboard-card total-operators-card">
                         <h3><i class="fas fa-users"></i> Total Operators</h3>
                         <div style="display: flex; align-items: center; gap: 20px;">
                             <div style="flex: 1;">
@@ -155,41 +155,46 @@
                             </div>
                         </div>
                         <div class="line-selector">
-                            <select id="dashboardLineSelect">
+                            <select id="dashboardTotalOperatorsLineSelect">
                                 <option value="">All Lines</option>
                             </select>
                         </div>
                         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
                             <div style="color: var(--text-secondary); font-size: 0.85rem;">
                                 <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
-                                Click to view all operators in the system
+                                Select line to view operator count
                             </div>
                         </div>
                     </div>
 
-                    <!-- Skill Groups Container Card -->
+                    <!-- Combined Skill Groups Distribution Card - UPDATED: Combined with chart -->
                     <div class="dashboard-card skill-groups-container-card">
                         <h3><i class="fas fa-layer-group"></i> Skill Groups Distribution</h3>
-                        <div class="skill-groups-grid">
-                            <div class="skill-group-card group-a" id="dashboardGroupACard">
-                                <div class="count" id="dashboardGroupACount">0</div>
-                                <div class="label">Group A</div>
-                                <div class="description">Grade A Operators</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;">
+                            <div class="skill-groups-grid">
+                                <div class="skill-group-card group-a" id="dashboardGroupACard">
+                                    <div class="count" id="dashboardGroupACount">0</div>
+                                    <div class="label">Group A</div>
+                                    <div class="description">Grade A Operators</div>
+                                </div>
+                                <div class="skill-group-card group-b" id="dashboardGroupBCard">
+                                    <div class="count" id="dashboardGroupBCount">0</div>
+                                    <div class="label">Group B</div>
+                                    <div class="description">Grade B Operators</div>
+                                </div>
+                                <div class="skill-group-card group-c" id="dashboardGroupCCard">
+                                    <div class="count" id="dashboardGroupCCount">0</div>
+                                    <div class="label">Group C</div>
+                                    <div class="description">Grade C Operators</div>
+                                </div>
+                                <div class="skill-group-card group-d" id="dashboardGroupDCard">
+                                    <div class="count" id="dashboardGroupDCount">0</div>
+                                    <div class="label">Group D</div>
+                                    <div class="description">Grade D Operators</div>
+                                </div>
                             </div>
-                            <div class="skill-group-card group-b" id="dashboardGroupBCard">
-                                <div class="count" id="dashboardGroupBCount">0</div>
-                                <div class="label">Group B</div>
-                                <div class="description">Grade B Operators</div>
-                            </div>
-                            <div class="skill-group-card group-c" id="dashboardGroupCCard">
-                                <div class="count" id="dashboardGroupCCount">0</div>
-                                <div class="label">Group C</div>
-                                <div class="description">Grade C Operators</div>
-                            </div>
-                            <div class="skill-group-card group-d" id="dashboardGroupDCard">
-                                <div class="count" id="dashboardGroupDCount">0</div>
-                                <div class="label">Group D</div>
-                                <div class="description">Grade D Operators</div>
+                            <div class="distribution-chart">
+                                <canvas id="skillDistributionChart" height="200"></canvas>
                             </div>
                         </div>
                         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
@@ -263,32 +268,6 @@
                         </div>
                     </div>
 
-                    <!-- Skill Distribution Card -->
-                    <div class="dashboard-card skill-distribution-card">
-                        <h3><i class="fas fa-star"></i> Skill Distribution</h3>
-                        <div class="distribution-chart">
-                            <canvas id="skillDistributionChart" height="150"></canvas>
-                        </div>
-                        <div class="distribution-stats">
-                            <div class="skill-stat group-a">
-                                <div class="count" id="skillGroupACount">0</div>
-                                <div class="label">Group A</div>
-                            </div>
-                            <div class="skill-stat group-b">
-                                <div class="count" id="skillGroupBCount">0</div>
-                                <div class="label">Group B</div>
-                            </div>
-                            <div class="skill-stat group-c">
-                                <div class="count" id="skillGroupCCount">0</div>
-                                <div class="label">Group C</div>
-                            </div>
-                            <div class="skill-stat group-d">
-                                <div class="count" id="skillGroupDCount">0</div>
-                                <div class="label">Group D</div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Garment Standard SMV Card -->
                     <div class="dashboard-card garment-smv-card">
                         <h3><i class="fas fa-ruler"></i> Garment Standard SMV</h3>
@@ -318,6 +297,17 @@
                         <div class="garment-smv-value" id="totalWorkingSMV">0.00</div>
                         <div class="garment-smv-label">Total Working SMV (minutes)</div>
                     </div>
+
+                    <!-- Line Efficiency Card -->
+                    <div class="dashboard-card line-efficiency-card">
+                        <h3><i class="fas fa-industry"></i> Top Performing Lines</h3>
+                        <div class="line-efficiency-stats" id="dashboardTopLines">
+                            <div class="line-efficiency-item">
+                                <span class="line-name">Loading...</span>
+                                <span class="line-efficiency">0%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Charts Section -->
@@ -338,7 +328,7 @@
             </div>
         </div>
 
-        <!-- Operators Tab - UPDATED v17 -->
+        <!-- Operators Tab - UPDATED v18 -->
         <div id="operators" class="tab-content">
             <div class="controls-panel">
                 <div class="search-filter">
@@ -399,7 +389,7 @@
             </div>
         </div>
 
-        <!-- Performance Data Tab - UPDATED v17: Action buttons in Actions column -->
+        <!-- Performance Data Tab - UPDATED v18: Action buttons in Actions column -->
         <div id="performance" class="tab-content">
             <div class="controls-panel">
                 <div class="search-filter">
@@ -457,7 +447,7 @@
             </div>
         </div>
 
-        <!-- Time Study Tab - UPDATED v17: Complete machine list -->
+        <!-- Time Study Tab - UPDATED v18: Complete machine list -->
         <div id="time-study" class="tab-content">
             <div class="stopwatch-container">
                 <h3><i class="fas fa-stopwatch"></i> Time Study & SAM Calculation</h3>
@@ -1030,11 +1020,11 @@
         <!-- Footer -->
         <footer class="footer">
             <p>© 2025 Sidney Apparels LLC - Manufacturing Excellence</p>
-            <div class="footer-credit">Made by Shantanu in HTML - Version 17.0</div>
+            <div class="footer-credit">Made by Shantanu in HTML - Version 18.0</div>
             <div class="footer-stats">
                 <div class="footer-stat">
                     <i class="fas fa-database"></i>
-                    <span>Data Version: <strong id="dataVersion">17.0.0</strong></span>
+                    <span>Data Version: <strong id="dataVersion">18.0.0</strong></span>
                 </div>
                 <div class="footer-stat">
                     <i class="fas fa-sync-alt"></i>
@@ -1211,7 +1201,7 @@
         </div>
     </div>
 
-    <!-- Edit Performance Details Modal - COMPLETELY REDESIGNED for v17 -->
+    <!-- Edit Performance Details Modal -->
     <div id="editPerformanceDetailsModal" class="modal">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
@@ -1322,7 +1312,7 @@
                     </div>
                 </div>
                 
-                <!-- Other Machines Section - REDESIGNED for v17 -->
+                <!-- Other Machines Section -->
                 <h4 style="margin: 30px 0 20px 0; color: var(--primary-color); padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                     <i class="fas fa-list"></i> Other Machines & Efficiencies
                     <small style="color: var(--text-secondary); font-weight: normal; margin-left: 10px;">(Add multiple machines with their respective efficiencies)</small>
