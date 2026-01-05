@@ -1,4 +1,4 @@
-// skill-matrix-v17.js - Complete JavaScript for Sidney Apparels OPS v17
+// skill-matrix-v18.js - Complete JavaScript for Sidney Apparels OPS v18
 
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -80,6 +80,7 @@ let efficiencyChart = null;
 let linePerformanceChart = null;
 let machinePerformanceChart = null;
 let skillDistributionChart = null;
+let skillGroupsBarChart = null;
 
 // Machine allowance mapping - Updated with all machines (default 7% for all)
 const machineAllowances = {
@@ -304,7 +305,7 @@ function updateRealTimeClock() {
     elements.sidebarLastUpdated.textContent = dateString;
     elements.headerLastSync.textContent = timeString;
     elements.lastSync.textContent = timeString;
-    elements.dataVersion.textContent = '17.0.0';
+    elements.dataVersion.textContent = '18.0.0';
 }
 
 // Setup sidebar navigation - UPDATED for v16
@@ -356,7 +357,7 @@ function setupSidebarNavigation() {
         });
     });
     
-    // Make summary cards clickable (excluding removed cards)
+    // Remove clickable behavior from Total Operators card - V18 CHANGE
     document.querySelectorAll('.stat-card.clickable').forEach(card => {
         if (!card.id.includes('TotalOperatorsCard')) {
             card.addEventListener('click', () => {
@@ -483,13 +484,13 @@ function adjustDashboardForMobile() {
             el.style.overflowX = 'auto';
         });
     } else if (window.innerWidth <= 900) {
-        // Tablet layout
-        dashboardGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+        // Tablet layout - V18 CHANGE: Ensure minimum 3 cards per row
+        dashboardGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
         garmentSmvContainer.style.gridTemplateColumns = '1fr';
         skillGroupsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
     } else {
-        // Desktop layout - Updated for v17: Better grid layout
-        dashboardGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(350px, 1fr))';
+        // Desktop layout - V18 CHANGE: Ensure minimum 3 cards per row
+        dashboardGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
         garmentSmvContainer.style.gridTemplateColumns = '1fr 1fr';
         skillGroupsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
     }
@@ -1046,47 +1047,81 @@ function saveOperatorMachineSkills() {
     localStorage.setItem('operatorMachineSkills', JSON.stringify(operatorMachineSkills));
 }
 
-// Update operator machine skill based on performance
+// Update operator machine skill based on performance - V18 CHANGE: Updated logic for machine statistics
 function updateOperatorMachineSkill(operatorId, machineName, efficiency) {
     if (!operatorMachineSkills[operatorId]) {
         operatorMachineSkills[operatorId] = {};
     }
     
-    if (!operatorMachineSkills[operatorId][machineName]) {
-        operatorMachineSkills[operatorId][machineName] = {
+    // Create a unique key for machine per style, line, and product combination
+    // Find the current operation details from the form
+    const lineNo = document.getElementById('studyLineNo')?.value || 
+                  document.getElementById('perfLineNo')?.value || '';
+    const styleNo = document.getElementById('studyStyleNo')?.value || 
+                   document.getElementById('perfStyleNo')?.value || '';
+    const productDesc = document.getElementById('studyProductDesc')?.value || 
+                       document.getElementById('perfProductDesc')?.value || '';
+    
+    // Create unique machine key based on style, line, product combination
+    const machineKey = `${machineName}_${lineNo}_${styleNo}_${productDesc}`;
+    
+    if (!operatorMachineSkills[operatorId][machineKey]) {
+        operatorMachineSkills[operatorId][machineKey] = {
+            machineName: machineName,
             operations: new Set(),
             efficiencies: [],
-            lastUpdated: new Date()
+            lastUpdated: new Date(),
+            context: { lineNo, styleNo, productDesc }
         };
     }
     
     // Add operation to set (unique operations)
     const operation = document.getElementById('studyOperation')?.value || 
                     document.getElementById('perfOperation')?.value || 'Unknown';
-    operatorMachineSkills[operatorId][machineName].operations.add(operation);
+    operatorMachineSkills[operatorId][machineKey].operations.add(operation);
     
     // Add efficiency to array
-    operatorMachineSkills[operatorId][machineName].efficiencies.push(efficiency);
+    operatorMachineSkills[operatorId][machineKey].efficiencies.push(efficiency);
     
     // Keep only last 10 efficiencies
-    if (operatorMachineSkills[operatorId][machineName].efficiencies.length > 10) {
-        operatorMachineSkills[operatorId][machineName].efficiencies.shift();
+    if (operatorMachineSkills[operatorId][machineKey].efficiencies.length > 10) {
+        operatorMachineSkills[operatorId][machineKey].efficiencies.shift();
     }
     
-    operatorMachineSkills[operatorId][machineName].lastUpdated = new Date();
+    operatorMachineSkills[operatorId][machineKey].lastUpdated = new Date();
     saveOperatorMachineSkills();
 }
 
 // Calculate skill level for a machine based on performance
 function calculateMachineSkillLevel(operatorId, machineName) {
-    if (!operatorMachineSkills[operatorId] || !operatorMachineSkills[operatorId][machineName]) {
+    // Find all machine keys for this operator that match the machine name
+    const machineKeys = Object.keys(operatorMachineSkills[operatorId] || {}).filter(key => 
+        key.startsWith(machineName + '_')
+    );
+    
+    if (machineKeys.length === 0) {
         return 'D';
     }
     
-    const data = operatorMachineSkills[operatorId][machineName];
-    const avgEfficiency = data.efficiencies.length > 0 ? 
-        data.efficiencies.reduce((a, b) => a + b, 0) / data.efficiencies.length : 0;
-    const operationCount = data.operations.size;
+    let totalEfficiency = 0;
+    let totalEfficiencies = 0;
+    let operationCount = 0;
+    
+    // Aggregate data across all contexts for this machine
+    machineKeys.forEach(key => {
+        const data = operatorMachineSkills[operatorId][key];
+        if (data && data.efficiencies.length > 0) {
+            totalEfficiency += data.efficiencies.reduce((a, b) => a + b, 0);
+            totalEfficiencies += data.efficiencies.length;
+            operationCount += data.operations.size;
+        }
+    });
+    
+    if (totalEfficiencies === 0) {
+        return 'D';
+    }
+    
+    const avgEfficiency = totalEfficiency / totalEfficiencies;
     
     // Determine skill level based on new logic
     if (operationCount >= 3 && avgEfficiency >= 85) {
@@ -1100,22 +1135,42 @@ function calculateMachineSkillLevel(operatorId, machineName) {
     }
 }
 
-// Get all machines for an operator (from performance data)
+// Get all machines for an operator (from performance data) - V18 CHANGE: Updated logic for machine statistics
 function getOperatorMachines(operatorId) {
-    const machines = new Set();
+    const machines = new Map(); // Use Map to store unique machines by context
     
-    // Get machines from performance data
+    // Group by line, style, product combination to count machines correctly
     performanceData.forEach(record => {
         if (record.operatorId === operatorId && record.machineName) {
             let machineName = record.machineName;
             if (record.machineName === 'Others' && record.customMachineName) {
                 machineName = record.customMachineName;
             }
-            machines.add(machineName);
+            
+            // Create a context key
+            const contextKey = `${record.lineNo || ''}_${record.styleNo || ''}_${record.productDesc || ''}`;
+            const machineKey = `${machineName}_${contextKey}`;
+            
+            if (!machines.has(machineKey)) {
+                machines.set(machineKey, {
+                    machineName: machineName,
+                    context: contextKey,
+                    operations: new Set()
+                });
+            }
+            
+            // Add operation to the set
+            if (record.operation) {
+                machines.get(machineKey).operations.add(record.operation);
+            }
         }
     });
     
-    return Array.from(machines);
+    // Convert to array of machine names (unique per context)
+    const uniqueMachines = Array.from(machines.values()).map(item => item.machineName);
+    
+    // Remove duplicates (same machine name across different contexts)
+    return [...new Set(uniqueMachines)];
 }
 
 // Calculate multi-skill grade based on new logic
@@ -1352,7 +1407,7 @@ function updateDashboardStats() {
     if (elements.dashboardGroupCCount) elements.dashboardGroupCCount.textContent = groupCCount;
     if (elements.dashboardGroupDCount) elements.dashboardGroupDCount.textContent = groupDCount;
     
-    // Update skill distribution card
+    // Update skill distribution card - V18 CHANGE: Combined into one card
     if (elements.skillGroupACount) elements.skillGroupACount.textContent = groupACount;
     if (elements.skillGroupBCount) elements.skillGroupBCount.textContent = groupBCount;
     if (elements.skillGroupCCount) elements.skillGroupCCount.textContent = groupCCount;
@@ -1420,13 +1475,14 @@ function updateCombinedSMVInDashboard() {
     }
 }
 
-// Create dashboard charts - UPDATED v16: Remove Weekly Trend Chart
+// Create dashboard charts - UPDATED v18: Combined skill distribution into one card with bar chart
 function createDashboardCharts() {
     // Destroy existing charts if they exist
     if (efficiencyChart) efficiencyChart.destroy();
     if (linePerformanceChart) linePerformanceChart.destroy();
     if (machinePerformanceChart) machinePerformanceChart.destroy();
     if (skillDistributionChart) skillDistributionChart.destroy();
+    if (skillGroupsBarChart) skillGroupsBarChart.destroy();
     
     // 1. Efficiency Distribution Chart
     const efficiencyCtx = document.getElementById('efficiencyChart')?.getContext('2d');
@@ -1639,9 +1695,9 @@ function createDashboardCharts() {
         });
     }
     
-    // 4. Skill Distribution Chart
-    const skillCtx = document.getElementById('skillDistributionChart')?.getContext('2d');
-    if (skillCtx) {
+    // 4. Skill Groups Bar Chart - V18 CHANGE: Combined skill distribution into bar chart
+    const skillGroupsBarCtx = document.getElementById('skillGroupsBarChart')?.getContext('2d');
+    if (skillGroupsBarCtx) {
         const skillDistribution = {
             'Group A': 0,
             'Group B': 0,
@@ -1654,11 +1710,12 @@ function createDashboardCharts() {
             skillDistribution[multiSkillGrade]++;
         });
         
-        skillDistributionChart = new Chart(skillCtx, {
-            type: 'pie',
+        skillGroupsBarChart = new Chart(skillGroupsBarCtx, {
+            type: 'bar',
             data: {
                 labels: Object.keys(skillDistribution),
                 datasets: [{
+                    label: 'Number of Operators',
                     data: Object.values(skillDistribution),
                     backgroundColor: [
                         'rgba(76, 201, 240, 0.8)',
@@ -1678,15 +1735,30 @@ function createDashboardCharts() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: 'white',
+                            stepSize: 1
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                },
                 plugins: {
                     legend: {
-                        position: 'bottom',
                         labels: {
-                            color: 'white',
-                            padding: 15,
-                            font: {
-                                size: 11
-                            }
+                            color: 'white'
                         }
                     }
                 }
@@ -2349,7 +2421,7 @@ function getSkillScoreClass(score) {
     else return 'group-d';
 }
 
-// Render performance table with edit button v16 - UPDATED for v17: Action buttons in dropdown
+// Render performance table with edit button v16 - UPDATED for v18: Action buttons in sync with UI
 function renderPerformanceTable(filteredData = performanceData) {
     if (!elements.performanceBody) return;
     
@@ -2405,18 +2477,13 @@ function renderPerformanceTable(filteredData = performanceData) {
             <td class="${efficiencyClass}">${efficiency ? efficiency.toFixed(1) + '%' : '-'}</td>
             <td>${otherMachineEfficiencies}</td>
             <td>
-                <div class="action-dropdown">
-                    <button class="btn-icon action-dropdown-toggle" title="Actions">
-                        <i class="fas fa-ellipsis-v"></i>
+                <div class="action-buttons-small">
+                    <button class="btn-icon edit-perf-btn" data-id="${record.id}" title="Edit Record">
+                        <i class="fas fa-edit"></i>
                     </button>
-                    <div class="action-dropdown-menu">
-                        <button class="action-dropdown-item delete-perf-btn" data-id="${record.id}">
-                            <i class="fas fa-trash"></i> Delete Record
-                        </button>
-                        <button class="action-dropdown-item edit-perf-btn" data-id="${record.id}">
-                            <i class="fas fa-edit"></i> Edit Record
-                        </button>
-                    </div>
+                    <button class="btn-icon delete-perf-btn" data-id="${record.id}" title="Delete Record">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
             </td>
         `;
@@ -2431,44 +2498,20 @@ function renderPerformanceTable(filteredData = performanceData) {
         });
     });
     
-    // Setup action dropdowns
-    document.querySelectorAll('.action-dropdown-toggle').forEach(toggle => {
-        toggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const dropdown = toggle.nextElementSibling;
-            const isVisible = dropdown.style.display === 'block';
-            
-            // Hide all other dropdowns
-            document.querySelectorAll('.action-dropdown-menu').forEach(menu => {
-                menu.style.display = 'none';
-            });
-            
-            // Toggle this dropdown
-            dropdown.style.display = isVisible ? 'none' : 'block';
+    // Add event listeners for action buttons - V18 CHANGE: Consistent with operators table
+    document.querySelectorAll('.edit-perf-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const recordId = e.target.closest('button').getAttribute('data-id');
+            openEditPerformanceModal(recordId);
         });
     });
     
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.action-dropdown-menu').forEach(menu => {
-            menu.style.display = 'none';
-        });
-    });
-    
-    // Add event listeners for dropdown items
     document.querySelectorAll('.delete-perf-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = e.target.closest('button').getAttribute('data-id');
             if (confirm('Are you sure you want to delete this performance record?')) {
                 await deletePerformanceRecord(id);
             }
-        });
-    });
-    
-    document.querySelectorAll('.edit-perf-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const recordId = e.target.closest('button').getAttribute('data-id');
-            openEditPerformanceModal(recordId);
         });
     });
 }
@@ -3049,7 +3092,7 @@ async function saveTimeStudyData() {
         // In a real implementation, you would need input fields for each machine's efficiency
         // For now, we'll use a default value or prompt the user
         
-        // Update operator machine skill
+        // Update operator machine skill - V18 CHANGE: Use updated logic
         updateOperatorMachineSkill(operatorId, machineName === 'Others' ? customMachineName : machineName, efficiency);
         
         // Save performance record
@@ -3153,7 +3196,7 @@ async function deletePerformanceRecord(id) {
     }
 }
 
-// Setup event listeners v16 - Updated with all changes for v17
+// Setup event listeners v18 - Updated with all changes for v18
 function setupEventListeners() {
     // Setup mobile menu
     setupMobileMenu();
@@ -3181,13 +3224,8 @@ function setupEventListeners() {
         });
     }
     
-    // Clickable Total Operators card
-    const dashboardTotalOperatorsCard = document.getElementById('dashboardTotalOperatorsCard');
-    if (dashboardTotalOperatorsCard) {
-        dashboardTotalOperatorsCard.addEventListener('click', () => {
-            showAllOperatorsModal('dashboard');
-        });
-    }
+    // V18 CHANGE: Remove clickable behavior from Total Operators card
+    // Total Operators card should NOT be clickable
     
     // Clickable Skill Group Cards
     const dashboardGroupACard = document.getElementById('dashboardGroupACard');
@@ -3564,24 +3602,8 @@ function setupEventListeners() {
     }
 }
 
-// Show all operators modal
-function showAllOperatorsModal(source) {
-    const totalOperators = operators.length;
-    const avgEfficiency = performanceData.length > 0 ? 
-        (performanceData.reduce((sum, record) => sum + (record.efficiency || 0), 0) / performanceData.length).toFixed(1) : 0;
-    
-    // Update modal title and info
-    elements.groupModalTitle.textContent = `All Operators (${source})`;
-    elements.groupOperatorCount.textContent = totalOperators;
-    elements.groupAvgEfficiency.textContent = avgEfficiency + '%';
-    elements.groupDescription.textContent = `Complete list of all ${totalOperators} operators in the system`;
-    
-    // Render all operators
-    renderGroupOperatorsList(operators, 'skillScore');
-    
-    // Show modal
-    document.getElementById('groupOperatorsModal').classList.add('active');
-}
+// Show all operators modal - V18 CHANGE: This function is not needed as Total Operators is not clickable
+// Removed the click event listener for Total Operators card
 
 // Export group operators to Excel (kept for backward compatibility, though import/export is removed)
 function exportGroupOperators(group) {
