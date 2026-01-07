@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sidney Apparels - Operator Performance System v18</title>
+    <title>Sidney Apparels - Operator Performance System v17</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
 </head>
 <body>
     <!-- Loading Overlay -->
@@ -17,7 +16,7 @@
         <div class="loading-spinner"></div>
         <div class="loading-text">LOADING SYSTEM DATA</div>
         <div style="margin-top: 25px; text-align: center; max-width: 500px; padding: 0 20px;">
-            <h3 style="color: var(--text-primary); margin-bottom: 15px;">Sidney Apparels OPS v18.0</h3>
+            <h3 style="color: var(--text-primary); margin-bottom: 15px;">Sidney Apparels OPS v17.0</h3>
             <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6;">
                 Welcome to the Operator Performance System. Track operator efficiency, conduct time studies, 
                 and analyze manufacturing performance.
@@ -86,7 +85,7 @@
                         <i class="fas fa-database"></i>
                         <div class="info-item-content">
                             <div class="info-label">DATA VERSION</div>
-                            <div class="info-value">v18.0</div>
+                            <div class="info-value">v17.0</div>
                         </div>
                     </div>
                     <div class="info-item">
@@ -110,11 +109,19 @@
                             <div class="info-value" id="headerActiveLines">0</div>
                         </div>
                     </div>
+                    <!-- NEW: Time Studies Card -->
+                    <div class="info-item">
+                        <i class="fas fa-stopwatch"></i>
+                        <div class="info-item-content">
+                            <div class="info-label">TIME STUDIES</div>
+                            <div class="info-value" id="headerTimeStudies">0</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <!-- Dashboard Tab - UPDATED v18 -->
+        <!-- Dashboard Tab - UPDATED v17 -->
         <div id="dashboard" class="tab-content active">
             <div class="controls-panel">
                 <div class="search-filter">
@@ -143,10 +150,10 @@
 
             <!-- Dashboard Scrollable Container -->
             <div class="dashboard-scrollable">
-                <!-- UPDATED v18: New Dashboard Grid with Consistent Card Sizes and 3 cards per row minimum -->
-                <div class="dashboard-grid-v18">
-                    <!-- Total Operators Card - UPDATED: Not clickable, with line dropdown -->
-                    <div class="dashboard-card total-operators-card">
+                <!-- UPDATED v17: New Dashboard Grid -->
+                <div class="dashboard-grid-v11">
+                    <!-- Total Operators Card - UPDATED: Not clickable, line selection -->
+                    <div class="dashboard-card total-operators-card" id="dashboardTotalOperatorsCard">
                         <h3><i class="fas fa-users"></i> Total Operators</h3>
                         <div style="display: flex; align-items: center; gap: 20px;">
                             <div style="flex: 1;">
@@ -155,7 +162,7 @@
                             </div>
                         </div>
                         <div class="line-selector">
-                            <select id="dashboardTotalOperatorsLineSelect">
+                            <select id="dashboardLineSelect">
                                 <option value="">All Lines</option>
                             </select>
                         </div>
@@ -167,34 +174,29 @@
                         </div>
                     </div>
 
-                    <!-- Combined Skill Groups Distribution Card - UPDATED: Combined with chart -->
+                    <!-- Skill Groups Container Card -->
                     <div class="dashboard-card skill-groups-container-card">
                         <h3><i class="fas fa-layer-group"></i> Skill Groups Distribution</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;">
-                            <div class="skill-groups-grid">
-                                <div class="skill-group-card group-a" id="dashboardGroupACard">
-                                    <div class="count" id="dashboardGroupACount">0</div>
-                                    <div class="label">Group A</div>
-                                    <div class="description">Grade A Operators</div>
-                                </div>
-                                <div class="skill-group-card group-b" id="dashboardGroupBCard">
-                                    <div class="count" id="dashboardGroupBCount">0</div>
-                                    <div class="label">Group B</div>
-                                    <div class="description">Grade B Operators</div>
-                                </div>
-                                <div class="skill-group-card group-c" id="dashboardGroupCCard">
-                                    <div class="count" id="dashboardGroupCCount">0</div>
-                                    <div class="label">Group C</div>
-                                    <div class="description">Grade C Operators</div>
-                                </div>
-                                <div class="skill-group-card group-d" id="dashboardGroupDCard">
-                                    <div class="count" id="dashboardGroupDCount">0</div>
-                                    <div class="label">Group D</div>
-                                    <div class="description">Grade D Operators</div>
-                                </div>
+                        <div class="skill-groups-grid">
+                            <div class="skill-group-card group-a" id="dashboardGroupACard">
+                                <div class="count" id="dashboardGroupACount">0</div>
+                                <div class="label">Group A</div>
+                                <div class="description">Grade A Operators</div>
                             </div>
-                            <div class="distribution-chart">
-                                <canvas id="skillDistributionChart" height="200"></canvas>
+                            <div class="skill-group-card group-b" id="dashboardGroupBCard">
+                                <div class="count" id="dashboardGroupBCount">0</div>
+                                <div class="label">Group B</div>
+                                <div class="description">Grade B Operators</div>
+                            </div>
+                            <div class="skill-group-card group-c" id="dashboardGroupCCard">
+                                <div class="count" id="dashboardGroupCCount">0</div>
+                                <div class="label">Group C</div>
+                                <div class="description">Grade C Operators</div>
+                            </div>
+                            <div class="skill-group-card group-d" id="dashboardGroupDCard">
+                                <div class="count" id="dashboardGroupDCount">0</div>
+                                <div class="label">Group D</div>
+                                <div class="description">Grade D Operators</div>
                             </div>
                         </div>
                         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
@@ -206,7 +208,7 @@
                     </div>
 
                     <!-- Performance Metrics Card -->
-                    <div class="dashboard-card performance-metrics-card">
+                    <div class="dashboard-card">
                         <h3><i class="fas fa-chart-line"></i> Performance Metrics</h3>
                         <div class="metrics-grid">
                             <div class="metric-item efficiency">
@@ -234,42 +236,8 @@
                         </div>
                     </div>
 
-                    <!-- Machine Usage Statistics Card -->
-                    <div class="dashboard-card machine-usage-card">
-                        <div class="stat-header">
-                            <h3><i class="fas fa-cogs"></i> Machine Usage Statistics</h3>
-                        </div>
-                        <div class="machine-usage-stats" id="dashboardMachineUsage">
-                            <div class="machine-usage-item">
-                                <span class="machine-name">Loading...</span>
-                                <span class="machine-count">0</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Combined SMV Card -->
-                    <div class="dashboard-card combined-smv-card">
-                        <h3><i class="fas fa-clock"></i> Standard vs Working SMV</h3>
-                        <div class="smv-values">
-                            <div class="smv-value standard">
-                                <div class="value" id="dashboardAvgStdSMV">0.00</div>
-                                <div class="label">Avg. Standard</div>
-                            </div>
-                            <div class="smv-value working">
-                                <div class="value" id="dashboardAvgWorkSMV">0.00</div>
-                                <div class="label">Avg. Working</div>
-                            </div>
-                        </div>
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
-                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
-                                Standard SMV vs Working SMV comparison
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Garment Standard SMV Card -->
-                    <div class="dashboard-card garment-smv-card">
+                    <!-- UPDATED v17: Smaller Garment SMV Cards -->
+                    <div class="garment-smv-card standard compact">
                         <h3><i class="fas fa-ruler"></i> Garment Standard SMV</h3>
                         <div class="garment-smv-selectors">
                             <select id="standardSMVLineSelect">
@@ -283,8 +251,7 @@
                         <div class="garment-smv-label">Total Standard SMV (minutes)</div>
                     </div>
 
-                    <!-- Garment Working SMV Card -->
-                    <div class="dashboard-card garment-smv-card">
+                    <div class="garment-smv-card working compact">
                         <h3><i class="fas fa-ruler-combined"></i> Garment Working SMV</h3>
                         <div class="garment-smv-selectors">
                             <select id="workingSMVLineSelect">
@@ -298,13 +265,41 @@
                         <div class="garment-smv-label">Total Working SMV (minutes)</div>
                     </div>
 
-                    <!-- Line Efficiency Card -->
-                    <div class="dashboard-card line-efficiency-card">
-                        <h3><i class="fas fa-industry"></i> Top Performing Lines</h3>
-                        <div class="line-efficiency-stats" id="dashboardTopLines">
-                            <div class="line-efficiency-item">
-                                <span class="line-name">Loading...</span>
-                                <span class="line-efficiency">0%</span>
+                    <!-- UPDATED v17: Machine Usage Statistics Card -->
+                    <div class="dashboard-card machine-usage-card">
+                        <h3><i class="fas fa-cogs"></i> Machine Usage Statistics</h3>
+                        <div class="machine-usage-stats" id="dashboardMachineUsage">
+                            <div class="machine-usage-item">
+                                <span class="machine-name">Loading...</span>
+                                <span class="machine-count">0</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+                                Unique machines used by operators
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UPDATED v17: Time Studies Count Card -->
+                    <div class="dashboard-card time-studies-card">
+                        <h3><i class="fas fa-stopwatch"></i> Time Studies Completed</h3>
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 3rem; font-weight: 700; margin-bottom: 10px; color: var(--primary-color);" id="dashboardTimeStudiesCount">0</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Total Time Studies</div>
+                            </div>
+                        </div>
+                        <div class="line-selector">
+                            <select id="timeStudiesLineSelect">
+                                <option value="">All Lines</option>
+                            </select>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+                                Filter by line to view time studies count
                             </div>
                         </div>
                     </div>
@@ -315,6 +310,10 @@
                     <div class="chart-card">
                         <h4><i class="fas fa-chart-pie"></i> Efficiency Distribution</h4>
                         <canvas id="efficiencyChart" height="250"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h4><i class="fas fa-trend-up"></i> Weekly Performance Trend</h4>
+                        <canvas id="weeklyTrendChart" height="250"></canvas>
                     </div>
                     <div class="chart-card">
                         <h4><i class="fas fa-industry"></i> Line Performance</h4>
@@ -328,8 +327,110 @@
             </div>
         </div>
 
-        <!-- Operators Tab - UPDATED v18 -->
+        <!-- Operators Tab - UPDATED v17 with Serial Numbers -->
         <div id="operators" class="tab-content">
+            <!-- Compact Statistics Dashboard -->
+            <div class="stats-dashboard compact-stats">
+                <div class="stat-card glow">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-change">
+                            <i class="fas fa-arrow-up"></i>
+                            12%
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalOperators">0</h3>
+                        <p>Total Operators</p>
+                        <div class="operator-distribution">
+                            <div class="distribution-item group-a" id="operatorsGroupAClickable">
+                                <div class="count" id="operatorsGroupACount">0</div>
+                                <div class="label">Group A</div>
+                            </div>
+                            <div class="distribution-item group-b" id="operatorsGroupBClickable">
+                                <div class="count" id="operatorsGroupBCount">0</div>
+                                <div class="label">Group B</div>
+                            </div>
+                            <div class="distribution-item group-c" id="operatorsGroupCClickable">
+                                <div class="count" id="operatorsGroupCCount">0</div>
+                                <div class="label">Group C</div>
+                            </div>
+                            <div class="distribution-item group-d" id="operatorsGroupDClickable">
+                                <div class="count" id="operatorsGroupDCount">0</div>
+                                <div class="label">Group D</div>
+                            </div>
+                        </div>
+                        <div class="line-selector">
+                            <select id="operatorsLineFilter">
+                                <option value="">All Lines</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Performance Summary Card -->
+                <div class="stat-card clickable" data-tab="performance">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-change">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="performanceRecords">0</h3>
+                        <p>Performance Records</p>
+                        <div style="margin-top: 12px; color: var(--text-secondary); font-size: 0.9rem;">
+                            <div>Avg Efficiency: <span id="performanceAvgEfficiency" style="color: var(--success-color); font-weight: 600;">0%</span></div>
+                            <div>Total Operations: <span id="performanceTotalOps" style="color: var(--primary-color); font-weight: 600;">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Time Study Summary Card -->
+                <div class="stat-card clickable" data-tab="time-study">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-stopwatch"></i>
+                        </div>
+                        <div class="stat-change">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="timeStudies">0</h3>
+                        <p>Time Studies Today</p>
+                        <div style="margin-top: 12px; color: var(--text-secondary); font-size: 0.9rem;">
+                            <div>Avg Cycle Time: <span id="timeStudyAvgCycle" style="color: var(--warning-color); font-weight: 600;">0s</span></div>
+                            <div>Completed: <span id="timeStudyCompleted" style="color: var(--success-color); font-weight: 600;">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Analysis Summary Card -->
+                <div class="stat-card clickable" data-tab="dashboard">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-dashboard"></i>
+                        </div>
+                        <div class="stat-change">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="analysisSummary">0</h3>
+                        <p>Dashboard Insights</p>
+                        <div style="margin-top: 12px; color: var(--text-secondary); font-size: 0.9rem;">
+                            <div>Active Lines: <span id="activeLines" style="color: var(--primary-color); font-weight: 600;">0</span></div>
+                            <div>Avg SMV Diff: <span id="avgSMVDiff" style="color: var(--accent-color); font-weight: 600;">0%</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="controls-panel">
                 <div class="search-filter">
                     <div class="search-box">
@@ -356,7 +457,7 @@
                     <button id="editExistingDetailsBtn" class="btn btn-warning">
                         <i class="fas fa-edit"></i> Edit Existing Details
                     </button>
-                    <button id="saveBtn" class="btn btn-warning">
+                    <button id="saveBtn" class="btn btn-success">
                         <i class="fas fa-save"></i> Save Changes
                     </button>
                     <button id="refreshBtn" class="btn btn-info">
@@ -374,6 +475,7 @@
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th>S.No.</th>
                                 <th>OPERATOR ID</th>
                                 <th>OPERATOR NAME</th>
                                 <th>CURRENT SEW LINE</th>
@@ -389,8 +491,73 @@
             </div>
         </div>
 
-        <!-- Performance Data Tab - UPDATED v18: Action buttons in Actions column -->
+        <!-- Performance Data Tab - UPDATED v17 with Serial Numbers -->
         <div id="performance" class="tab-content">
+            <!-- Statistics Dashboard with 3 cards -->
+            <div class="stats-dashboard">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="stat-change">
+                            <i class="fas fa-arrow-up"></i>
+                            5%
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="avgEfficiency">0%</h3>
+                        <p>Average Efficiency</p>
+                        <div style="margin-top: 12px; color: var(--text-secondary); font-size: 0.9rem;">
+                            <div>Total Operations: <span id="totalOperations" style="color: var(--primary-color); font-weight: 600;">0</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Combined SMV Card -->
+                <div class="stat-card combined-smv-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-change">
+                            <i class="fas fa-arrows-alt-v"></i>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <p>Standard vs Working SMV</p>
+                        <div class="smv-values">
+                            <div class="smv-value standard">
+                                <div class="value" id="avgSMV">0.00</div>
+                                <div class="label">Avg. Standard</div>
+                            </div>
+                            <div class="smv-value working">
+                                <div class="value" id="avgWorkingSMV">0.00</div>
+                                <div class="label">Avg. Working</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Machine Usage Statistics Card -->
+                <div class="stat-card machine-usage-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                    </div>
+                    <div class="stat-content">
+                        <p>Machine Usage Statistics</p>
+                        <div class="machine-usage-stats" id="machineUsageStats">
+                            <div class="machine-usage-item">
+                                <span class="machine-name">No data available</span>
+                                <span class="machine-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="controls-panel">
                 <div class="search-filter">
                     <div class="search-box">
@@ -413,6 +580,9 @@
                     <button id="addPerformanceBtn" class="btn btn-primary">
                         <i class="fas fa-plus-circle"></i> Add Performance Record
                     </button>
+                    <button id="analyzeBtn" class="btn btn-info">
+                        <i class="fas fa-chart-bar"></i> View Analysis
+                    </button>
                 </div>
             </div>
 
@@ -424,6 +594,7 @@
                     <table class="performance-table">
                         <thead>
                             <tr>
+                                <th>S.No.</th>
                                 <th>Timestamp</th>
                                 <th>Line No</th>
                                 <th>Style No</th>
@@ -437,6 +608,8 @@
                                 <th>Working SMV</th>
                                 <th>Efficiency</th>
                                 <th>Other Machine Efficiency</th>
+                                <th>Operation Grade</th>
+                                <th>CTQ/Bottleneck</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -447,11 +620,11 @@
             </div>
         </div>
 
-        <!-- Time Study Tab - UPDATED v18: Complete machine list -->
+        <!-- Time Study Tab - UPDATED v17 with Pause Button and Operation Complexity Grade -->
         <div id="time-study" class="tab-content">
             <div class="stopwatch-container">
                 <h3><i class="fas fa-stopwatch"></i> Time Study & SAM Calculation</h3>
-                <p class="subtitle">Record lap times to calculate average time and efficiency (includes machine-specific allowances)</p>
+                <p class="subtitle">Record lap times to calculate average time and efficiency (includes general allowances)</p>
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -485,55 +658,64 @@
                     <div class="form-group">
                         <label for="studyMachine">Machine Name *</label>
                         <select id="studyMachine" required>
-                            <option value="">Select Machine</option>
-                            <option value="FLATLOCK_CYLINDER_BED_FABRIC_CUTTER_MACHINE">FLATLOCK CYLINDER BED FABRIC CUTTER MACHINE</option>
-                            <option value="5_HEAD_HEAT_TRANSFER_PRESS_MACHINE">5-HEAD HEAT TRANSFER PRESS MACHINE</option>
-                            <option value="AUTO_POCKET_HEM_MACHINE">AUTO POCKET HEM MACHINE</option>
-                            <option value="AUTO_POCKET_WELT_MACHINE">AUTO POCKET WELT MACHINE</option>
-                            <option value="AUTO_RIVET_MACHINE">AUTO RIVET MACHINE</option>
-                            <option value="AUTOMATIC_BELT_LOOP_ATTACH_MACHINE">AUTOMATIC BELT LOOP ATTACH MACHINE</option>
-                            <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING_MACHINES">AUTOMATIC FLAT BOTTOM HEMMING MACHINES</option>
-                            <option value="AUTOMATIC_LABEL_ASSEMBLY_MACHINE">AUTOMATIC LABEL ASSEMBLY MACHINE</option>
-                            <option value="AUTOMATIC_LABEL_FIXING_MACHINE">AUTOMATIC LABEL FIXING MACHINE</option>
-                            <option value="AUTOMATIC_POCKET_FACING_STITCHING_MACHINE">AUTOMATIC POCKET FACING STITCHING MACHINE</option>
-                            <option value="AUTOMATIC_POCKET_SETTER_MACHINE">AUTOMATIC POCKET SETTER MACHINE</option>
-                            <option value="AUTOMATIC_STRING_THRUSTING_MACHINE">AUTOMATIC STRING THRUSTING MACHINE</option>
-                            <option value="BARTACKING_MACHINE">BARTACKING MACHINE</option>
-                            <option value="BLIND_HEM_MACHINE">BLIND HEM MACHINE</option>
-                            <option value="BLIND_LOOP_MAKING_MACHINE">BLIND LOOP MAKING MACHINE</option>
-                            <option value="BOTTOM_HEM_MACHINE">BOTTOM HEM MACHINE</option>
-                            <option value="BUTTON_ATTACH_MACHINE">BUTTON ATTACH MACHINE</option>
-                            <option value="DOUBLE_NEEDLE_CHAIN_STITCH_MACHINE">DOUBLE NEEDLE CHAIN STITCH MACHINE</option>
-                            <option value="DOUBLE_NEEDLE_LOCK_STITCH_MACHINE">DOUBLE NEEDLE LOCK STITCH MACHINE</option>
-                            <option value="DOUBLE_NEEDLE_SPLIT_BAR_MACHINE">DOUBLE NEEDLE SPLIT BAR MACHINE</option>
-                            <option value="EYELET_BUTTONHOLING_MACHINE">EYELET BUTTONHOLING MACHINE</option>
-                            <option value="FEED_OF_ARM_MACHINE">FEED OF ARM MACHINE</option>
-                            <option value="FLATLOCK_CYLINDER_BED_MACHINE">FLATLOCK CYLINDER BED MACHINE</option>
-                            <option value="FLATLOCK_BABY_CYLINDER_BED_MACHINE">FLATLOCK BABY CYLINDER BED MACHINE</option>
-                            <option value="FLATLOCK_CYLINDERBED_ELASTIC_ATTACH_MACHINE">FLATLOCK CYLINDERBED ELASTIC ATTACH MACHINE</option>
-                            <option value="FLATLOCK_FLATBED_MACHINE">FLATLOCK FLATBED MACHINE</option>
-                            <option value="FLATLOCK_FLATBED_TOP_FEED_MACHINE">FLATLOCK FLATBED TOP FEED MACHINE</option>
-                            <option value="FLATSEAMER_MACHINE">FLATSEAMER MACHINE</option>
-                            <option value="HANG_TAG_STRING_INSERTION_MACHINE">HANG TAG STRING INSERTION MACHINE</option>
-                            <option value="HEAT_TRANSFER_PRESS_MACHINE">HEAT TRANSFER PRESS MACHINE</option>
-                            <option value="INSEAM_IRON">INSEAM IRON</option>
-                            <option value="IRON_TABLE">IRON TABLE</option>
-                            <option value="MINI_PATTERN_SEAMER_MACHINE">MINI PATTERN SEAMER MACHINE</option>
-                            <option value="MULTI_NEEDLE_MACHINE">MULTI NEEDLE MACHINE</option>
-                            <option value="NORMAL_BUTTON_HOLE_MACHINE">NORMAL BUTTON HOLE MACHINE</option>
-                            <option value="OVERLOCK_CUFF_ATTACH_MACHINE">OVERLOCK CUFF ATTACH MACHINE</option>
-                            <option value="OVERLOCK_CYLINDER_BED_MACHINE">OVERLOCK CYLINDER BED MACHINE</option>
-                            <option value="OVERLOCK_MACHINE">OVERLOCK MACHINE</option>
-                            <option value="OVERLOCK_MACHINE_AND_BACK_LATCH_STITCH">OVERLOCK MACHINE AND BACK LATCH STITCH</option>
-                            <option value="OVERLOCK_NECK_RIB_ATTACH_MACHINE">OVERLOCK NECK RIB ATTACH MACHINE</option>
-                            <option value="PATTERN_SEWER_MACHINE">PATTERN SEWER MACHINE</option>
-                            <option value="POLO_SHIRT_PLACKET_AUTOMATION_MACHINE">POLO SHIRT PLACKET AUTOMATION MACHINE</option>
-                            <option value="QUILTING_MACHINE">QUILTING MACHINE</option>
-                            <option value="SINGLE_NEEDLE_EDGE_CUTTER_MACHINE">SINGLE NEEDLE EDGE CUTTER MACHINE</option>
-                            <option value="SINGLE_NEEDLE_FEED_MACHINE">SINGLE NEEDLE FEED MACHINE</option>
-                            <option value="SINGLE_NEEDLE_LOCK_STITCH_MACHINE">SINGLE NEEDLE LOCK STITCH MACHINE</option>
-                            <option value="SNAP_ATTACH_MACHINE">SNAP ATTACH MACHINE</option>
-                            <option value="ZIGZAG_STITCH_MACHINE">ZIGZAG STITCH MACHINE</option>
+                            <optgroup label="KANSAI Family">
+                                <option value="KANSAI">KANSAI</option>
+                                <option value="FLATSEAMER">FLATSEAMER</option>
+                                <option value="MULTI_NEEDLE">MULTI NEEDLE</option>
+                            </optgroup>
+                            <optgroup label="Single Needle Family">
+                                <option value="SNLS">SNLS (Single Needle Lock Stitch)</option>
+                                <option value="SNCS">SNCS (Single Needle Chain Stitch)</option>
+                            </optgroup>
+                            <optgroup label="Double Needle Family">
+                                <option value="DNLS">DNLS (Double Needle Lock Stitch)</option>
+                            </optgroup>
+                            <optgroup label="Feed of Arm">
+                                <option value="FOA">FOA (Feed Of Arm)</option>
+                            </optgroup>
+                            <optgroup label="Overlock Family">
+                                <option value="OVERLOCK">OVERLOCK</option>
+                            </optgroup>
+                            <optgroup label="Flatlock Family">
+                                <option value="FLATLOCK">FLATLOCK</option>
+                            </optgroup>
+                            <optgroup label="Button & Buttonhole">
+                                <option value="BUTTON_ATTACH">BUTTON ATTACH</option>
+                                <option value="BUTTONHOLE">BUTTONHOLE</option>
+                            </optgroup>
+                            <optgroup label="Bartack">
+                                <option value="BARTACK">BARTACK</option>
+                            </optgroup>
+                            <optgroup label="Automation Machines">
+                                <option value="AUTOMATIC_DRAWCORD">AUTOMATIC DRAWCORD</option>
+                                <option value="AUTO_POCKET_HEM">AUTO POCKET HEM</option>
+                                <option value="AUTO_POCKET_WELT">AUTO POCKET WELT</option>
+                                <option value="AUTOMATIC_POCKET_SETTER">AUTOMATIC POCKET SETTER</option>
+                                <option value="AUTOMATIC_BELT_LOOP_ATTACH">AUTOMATIC BELT LOOP ATTACH</option>
+                                <option value="BLIND_LOOP_MAKING">BLIND LOOP MAKING</option>
+                                <option value="AUTOMATIC_LABEL_ASSEMBLY">AUTOMATIC LABEL ASSEMBLY</option>
+                                <option value="AUTOMATIC_LABEL_FIXING">AUTOMATIC LABEL FIXING</option>
+                                <option value="HANG_TAG_STRING_INSERTION">HANG TAG STRING INSERTION</option>
+                                <option value="AUTO_RIVET">AUTO RIVET</option>
+                                <option value="SNAP_ATTACH">SNAP ATTACH</option>
+                                <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING">AUTOMATIC FLAT BOTTOM HEMMING</option>
+                            </optgroup>
+                            <optgroup label="Hemming Machines">
+                                <option value="BLIND_HEM">BLIND HEM</option>
+                                <option value="BOTTOM_HEM">BOTTOM HEM</option>
+                            </optgroup>
+                            <optgroup label="Special Machines">
+                                <option value="POLO_SHIRT_PLACKET_AUTOMATION">POLO SHIRT PLACKET AUTOMATION</option>
+                                <option value="PATTERN_SEWER">PATTERN SEWER</option>
+                                <option value="MINI_PATTERN_SEAMER">MINI PATTERN SEAMER</option>
+                                <option value="QUILTING">QUILTING</option>
+                                <option value="ZIGZAG_STITCH">ZIGZAG STITCH</option>
+                            </optgroup>
+                            <optgroup label="Pressing & Heat">
+                                <option value="HEAT_SEAL">HEAT SEAL / HEAT TRANSFER PRESS</option>
+                                <option value="INSEAM_IRON">INSEAM IRON</option>
+                                <option value="IRON_TABLE">IRON TABLE</option>
+                            </optgroup>
                             <option value="Others">Others</option>
                         </select>
                     </div>
@@ -552,6 +734,19 @@
                         <input type="number" id="standardSMV" step="0.01" required placeholder="e.g., 0.45">
                     </div>
                     <div class="form-group">
+                        <label for="operationGrade">Operation Complexity Grade</label>
+                        <select id="operationGrade">
+                            <option value="">Select Grade</option>
+                            <option value="A">Grade A (Complex)</option>
+                            <option value="B">Grade B (Moderate)</option>
+                            <option value="C">Grade C (Simple)</option>
+                            <option value="D">Grade D (Basic)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
                         <label for="studyOtherMachines">Other Machines Used</label>
                         <div class="multi-select" id="otherMachinesSelect">
                             <div class="multi-select-display">
@@ -559,35 +754,47 @@
                                 <i class="fas fa-chevron-down"></i>
                             </div>
                             <div class="multi-select-options" id="otherMachinesOptions">
-                                <!-- Machine options will be populated dynamically from full machine list -->
+                                <!-- Options will be populated dynamically from the same list as studyMachine -->
                             </div>
                             <div class="selected-options" id="selectedOtherMachines">
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Allowance Information Display -->
-                <div class="edit-info" id="allowanceInfo" style="margin-top: 15px; display: none;">
-                    <h4 style="color: var(--primary-color); margin-bottom: 10px;"><i class="fas fa-calculator"></i> Allowance Breakdown</h4>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                        <div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Personal Allowance</div>
-                            <div style="font-weight: 600; color: var(--success-color);" id="personalAllowanceDisplay">11%</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Contingency Allowance</div>
-                            <div style="font-weight: 600; color: var(--warning-color);" id="contingencyAllowanceDisplay">2%</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Machine Allowance</div>
-                            <div style="font-weight: 600; color: var(--primary-color);" id="machineAllowanceDisplay">0%</div>
+
+                <!-- NEW: Critical to Quality Radio Buttons and Bottleneck Checkbox -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Critical to Quality *</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="ctq" value="critical" required>
+                                <span class="radio-custom"></span>
+                                Critical to Quality
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="ctq" value="not-critical" required>
+                                <span class="radio-custom"></span>
+                                Not Critical
+                            </label>
                         </div>
                     </div>
-                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                        <div style="display: flex; justify-content: space-between;">
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Total Allowance:</div>
-                            <div style="font-weight: 700; color: var(--accent-color);" id="totalAllowanceDisplay">13%</div>
+                    <div class="form-group">
+                        <label class="checkbox-label" id="bottleneckContainer" style="display: none;">
+                            <input type="checkbox" id="bottleneckCheckbox">
+                            <span class="checkbox-custom"></span>
+                            Bottleneck Operation
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Allowance Information Display - UPDATED v17: General allowance 16.67% -->
+                <div class="edit-info" id="allowanceInfo" style="margin-top: 15px;">
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;"><i class="fas fa-calculator"></i> Allowance Breakdown</h4>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">General Allowance</div>
+                            <div style="font-weight: 600; color: var(--success-color);" id="generalAllowanceDisplay">16.67%</div>
                         </div>
                     </div>
                 </div>
@@ -616,8 +823,8 @@
                         <button class="stopwatch-btn stopwatch-btn-start" id="startBtn">
                             <i class="fas fa-play"></i> Start
                         </button>
-                        <button class="stopwatch-btn stopwatch-btn-stop" id="stopBtn" disabled>
-                            <i class="fas fa-stop"></i> Stop
+                        <button class="stopwatch-btn stopwatch-btn-pause" id="pauseBtn" disabled>
+                            <i class="fas fa-pause"></i> Pause
                         </button>
                         <button class="stopwatch-btn stopwatch-btn-lap" id="lapBtn" disabled>
                             <i class="fas fa-stopwatch"></i> Lap
@@ -664,9 +871,9 @@
                     </div>
                 </div>
                 
-                <!-- Results with machine-specific allowance -->
+                <!-- Results with general allowance -->
                 <div class="cycle-results">
-                    <h4 style="color: var(--primary-color);"><i class="fas fa-calculator"></i> Calculation Results (with machine-specific allowances)</h4>
+                    <h4 style="color: var(--primary-color);"><i class="fas fa-calculator"></i> Calculation Results (with general allowances)</h4>
                     <div class="results-grid">
                         <div class="result-item">
                             <div class="result-value" id="avgCycleTime">0.00</div>
@@ -697,7 +904,7 @@
             </div>
         </div>
 
-        <!-- Grading Criteria Tab -->
+        <!-- Grading Criteria Tab - UPDATED v17 with Operation Complexity Criteria -->
         <div id="grading-criteria" class="tab-content">
             <div class="grading-criteria-content">
                 <div class="criteria-section">
@@ -801,136 +1008,173 @@
                     </div>
                 </div>
                 
+                <!-- NEW: Operation Complexity Criteria Section -->
                 <div class="criteria-section">
-                    <h3><i class="fas fa-chart-line"></i> Skills Index Criteria</h3>
+                    <h3><i class="fas fa-layer-group"></i> Operation Complexity Grades</h3>
                     <div class="criteria-grid">
                         <div class="criteria-card">
-                            <h4><i class="fas fa-award" style="color: var(--success-color);"></i> Skill Level A</h4>
+                            <h4><i class="fas fa-award" style="color: #FF6B6B;"></i> Grade A</h4>
                             <div class="criteria-details">
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-a">
-                                        <i class="fas fa-cogs"></i>
+                                    <div class="criteria-icon" style="background-color: #FF6B6B;">
+                                        <i class="fas fa-exclamation-circle"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>3 machines, 3 operations</strong>
-                                        <div class="description">Versatile across multiple operations</div>
+                                        <strong>2-ply Curved</strong>
+                                        <div class="description">Complex curved operations</div>
                                     </div>
                                 </div>
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-a">
-                                        <i class="fas fa-times-circle"></i>
+                                    <div class="criteria-icon" style="background-color: #FF6B6B;">
+                                        <i class="fas fa-eye"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>0-2% WFT</strong>
-                                        <div class="description">Wrong First Time (Quality metric)</div>
+                                        <strong>Visible</strong>
+                                        <div class="description">High visibility areas</div>
                                     </div>
                                 </div>
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-a">
-                                        <i class="fas fa-bolt"></i>
+                                    <div class="criteria-icon" style="background-color: #FF6B6B;">
+                                        <i class="fas fa-compress-alt"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>60%+ efficiency</strong>
-                                        <div class="description">Excellent performance on machine</div>
+                                        <strong>Constricted Area</strong>
+                                        <div class="description">Limited accessibility</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon" style="background-color: #FF6B6B;">
+                                        <i class="fas fa-industry"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Examples</strong>
+                                        <div class="description">Armhole, neckline</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="criteria-card">
-                            <h4><i class="fas fa-award" style="color: var(--primary-color);"></i> Skill Level B</h4>
+                            <h4><i class="fas fa-award" style="color: #4ECDC4;"></i> Grade B</h4>
                             <div class="criteria-details">
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-b">
-                                        <i class="fas fa-cogs"></i>
+                                    <div class="criteria-icon" style="background-color: #4ECDC4;">
+                                        <i class="fas fa-draw-polygon"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>2 machines, 3 operations</strong>
-                                        <div class="description">Good operational range</div>
+                                        <strong>2-ply Straight/Curve</strong>
+                                        <div class="description">Moderate complexity</div>
                                     </div>
                                 </div>
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-b">
-                                        <i class="fas fa-times-circle"></i>
+                                    <div class="criteria-icon" style="background-color: #4ECDC4;">
+                                        <i class="fas fa-eye-slash"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>2.5-3% WFT</strong>
-                                        <div class="description">Wrong First Time (Quality metric)</div>
+                                        <strong>Visible/Non-visible</strong>
+                                        <div class="description">Mixed visibility</div>
                                     </div>
                                 </div>
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-b">
-                                        <i class="fas fa-bolt"></i>
+                                    <div class="criteria-icon" style="background-color: #4ECDC4;">
+                                        <i class="fas fa-compress"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>55%+ efficiency</strong>
-                                        <div class="description">Good performance on machine</div>
+                                        <strong>Semi-restricted</strong>
+                                        <div class="description">Moderate accessibility</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon" style="background-color: #4ECDC4;">
+                                        <i class="fas fa-industry"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Examples</strong>
+                                        <div class="description">Waist seam</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="criteria-card">
-                            <h4><i class="fas fa-award" style="color: var(--warning-color);"></i> Skill Level C</h4>
+                            <h4><i class="fas fa-award" style="color: #FFD166;"></i> Grade C</h4>
                             <div class="criteria-details">
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-c">
-                                        <i class="fas fa-cogs"></i>
+                                    <div class="criteria-icon" style="background-color: #FFD166;">
+                                        <i class="fas fa-ruler-combined"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>2 machines, 2 operations</strong>
-                                        <div class="description">Basic operational capability</div>
+                                        <strong>2-ply Straight</strong>
+                                        <div class="description">Straight line operations</div>
                                     </div>
                                 </div>
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-c">
-                                        <i class="fas fa-times-circle"></i>
+                                    <div class="criteria-icon" style="background-color: #FFD166;">
+                                        <i class="fas fa-eye-slash"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>3.5-5% WFT</strong>
-                                        <div class="description">Wrong First Time (Quality metric)</div>
+                                        <strong>Non-visible</strong>
+                                        <div class="description">Hidden areas</div>
                                     </div>
                                 </div>
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-c">
-                                        <i class="fas fa-bolt"></i>
+                                    <div class="criteria-icon" style="background-color: #FFD166;">
+                                        <i class="fas fa-expand-alt"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>50%+ efficiency</strong>
-                                        <div class="description">Basic performance on machine</div>
+                                        <strong>Open Area</strong>
+                                        <div class="description">Good accessibility</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon" style="background-color: #FFD166;">
+                                        <i class="fas fa-industry"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Examples</strong>
+                                        <div class="description">Inner seam</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="criteria-card">
-                            <h4><i class="fas fa-award" style="color: var(--accent-color);"></i> Skill Level D</h4>
+                            <h4><i class="fas fa-award" style="color: #06D6A0;"></i> Grade D</h4>
                             <div class="criteria-details">
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-d">
-                                        <i class="fas fa-cogs"></i>
+                                    <div class="criteria-icon" style="background-color: #06D6A0;">
+                                        <i class="fas fa-layer-group"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>1 machine, 2 operations</strong>
-                                        <div class="description">Limited operational scope</div>
+                                        <strong>1-ply Straight</strong>
+                                        <div class="description">Simple single-layer operations</div>
                                     </div>
                                 </div>
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-d">
-                                        <i class="fas fa-times-circle"></i>
+                                    <div class="criteria-icon" style="background-color: #06D6A0;">
+                                        <i class="fas fa-eye"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>5.5%+ WFT</strong>
-                                        <div class="description">Wrong First Time (Quality metric)</div>
+                                        <strong>Visible</strong>
+                                        <div class="description">Easy to inspect</div>
                                     </div>
                                 </div>
                                 <div class="criteria-item">
-                                    <div class="criteria-icon group-d">
-                                        <i class="fas fa-bolt"></i>
+                                    <div class="criteria-icon" style="background-color: #06D6A0;">
+                                        <i class="fas fa-expand"></i>
                                     </div>
                                     <div class="criteria-text">
-                                        <strong>50% efficiency</strong>
-                                        <div class="description">Entry level on machine</div>
+                                        <strong>Open Area</strong>
+                                        <div class="description">Excellent accessibility</div>
+                                    </div>
+                                </div>
+                                <div class="criteria-item">
+                                    <div class="criteria-icon" style="background-color: #06D6A0;">
+                                        <i class="fas fa-industry"></i>
+                                    </div>
+                                    <div class="criteria-text">
+                                        <strong>Examples</strong>
+                                        <div class="description">Hem, label attach</div>
                                     </div>
                                 </div>
                             </div>
@@ -939,7 +1183,7 @@
                 </div>
                 
                 <div class="criteria-section">
-                    <h3><i class="fas fa-chart-bar"></i> Efficiency Classification</h3>
+                    <h3><i class="fas fa-chart-line"></i> Efficiency Classification</h3>
                     <div class="criteria-grid">
                         <div class="criteria-card">
                             <h4><i class="fas fa-arrow-up" style="color: var(--success-color);"></i> High Efficiency</h4>
@@ -1020,11 +1264,11 @@
         <!-- Footer -->
         <footer class="footer">
             <p>© 2025 Sidney Apparels LLC - Manufacturing Excellence</p>
-            <div class="footer-credit">Made by Shantanu in HTML - Version 18.0</div>
+            <div class="footer-credit">Made by Shantanu in HTML - Version 17.0</div>
             <div class="footer-stats">
                 <div class="footer-stat">
                     <i class="fas fa-database"></i>
-                    <span>Data Version: <strong id="dataVersion">18.0.0</strong></span>
+                    <span>Data Version: <strong id="dataVersion">17.0.0</strong></span>
                 </div>
                 <div class="footer-stat">
                     <i class="fas fa-sync-alt"></i>
@@ -1201,214 +1445,250 @@
         </div>
     </div>
 
-    <!-- Edit Performance Details Modal -->
-    <div id="editPerformanceDetailsModal" class="modal">
+    <!-- NEW: Edit Existing Details Modal - UPDATED v17 -->
+    <div id="editExistingDetailsModal" class="modal">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
-                <h3><i class="fas fa-edit"></i> Edit Performance Details</h3>
-                <span class="close-modal" data-modal="editPerformanceDetailsModal">&times;</span>
+                <h3><i class="fas fa-edit"></i> Edit Existing Details</h3>
+                <span class="close-modal" data-modal="editExistingDetailsModal">&times;</span>
             </div>
             <div class="modal-body">
-                <div class="edit-info" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px;">
-                    <div>
-                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Operator ID</div>
-                        <div style="font-weight: 700; color: var(--primary-color);" id="editPerfOperatorId">-</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Operator Name</div>
-                        <div style="font-weight: 700; color: var(--text-primary);" id="editPerfOperatorName">-</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.85rem; color: var(--text-secondary);">Current Grade</div>
-                        <div style="font-weight: 700;" id="editPerfCurrentSkill">-</div>
-                    </div>
+                <div class="edit-info">
+                    <p><strong>Operator:</strong> <span id="editExistingOperatorName">-</span> (<span id="editExistingOperatorId">-</span>)</p>
+                    <p><strong>Current Grade:</strong> <span id="editExistingCurrentGrade">-</span></p>
+                    <p><strong>Performance Records:</strong> <span id="editExistingRecordCount">0</span></p>
                 </div>
-                
-                <h4 style="margin: 0 0 20px 0; color: var(--primary-color); padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                    <i class="fas fa-cogs"></i> Primary Machine & Operation Details
-                </h4>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="editPerfOperation">Operation Name</label>
-                        <input type="text" id="editPerfOperation" placeholder="e.g., Hemming">
+                        <label for="editExistingOperatorSelect">Select Operator *</label>
+                        <select id="editExistingOperatorSelect" required>
+                            <option value="">Select Operator</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label for="editPerfMachine">Primary Machine</label>
-                        <select id="editPerfMachine">
-                            <option value="">Select Primary Machine</option>
-                            <option value="FLATLOCK_CYLINDER_BED_FABRIC_CUTTER_MACHINE">FLATLOCK CYLINDER BED FABRIC CUTTER MACHINE</option>
-                            <option value="5_HEAD_HEAT_TRANSFER_PRESS_MACHINE">5-HEAD HEAT TRANSFER PRESS MACHINE</option>
-                            <option value="AUTO_POCKET_HEM_MACHINE">AUTO POCKET HEM MACHINE</option>
-                            <option value="AUTO_POCKET_WELT_MACHINE">AUTO POCKET WELT MACHINE</option>
-                            <option value="AUTO_RIVET_MACHINE">AUTO RIVET MACHINE</option>
-                            <option value="AUTOMATIC_BELT_LOOP_ATTACH_MACHINE">AUTOMATIC BELT LOOP ATTACH MACHINE</option>
-                            <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING_MACHINES">AUTOMATIC FLAT BOTTOM HEMMING MACHINES</option>
-                            <option value="AUTOMATIC_LABEL_ASSEMBLY_MACHINE">AUTOMATIC LABEL ASSEMBLY MACHINE</option>
-                            <option value="AUTOMATIC_LABEL_FIXING_MACHINE">AUTOMATIC LABEL FIXING MACHINE</option>
-                            <option value="AUTOMATIC_POCKET_FACING_STITCHING_MACHINE">AUTOMATIC POCKET FACING STITCHING MACHINE</option>
-                            <option value="AUTOMATIC_POCKET_SETTER_MACHINE">AUTOMATIC POCKET SETTER MACHINE</option>
-                            <option value="AUTOMATIC_STRING_THRUSTING_MACHINE">AUTOMATIC STRING THRUSTING MACHINE</option>
-                            <option value="BARTACKING_MACHINE">BARTACKING MACHINE</option>
-                            <option value="BLIND_HEM_MACHINE">BLIND HEM MACHINE</option>
-                            <option value="BLIND_LOOP_MAKING_MACHINE">BLIND LOOP MAKING MACHINE</option>
-                            <option value="BOTTOM_HEM_MACHINE">BOTTOM HEM MACHINE</option>
-                            <option value="BUTTON_ATTACH_MACHINE">BUTTON ATTACH MACHINE</option>
-                            <option value="DOUBLE_NEEDLE_CHAIN_STITCH_MACHINE">DOUBLE NEEDLE CHAIN STITCH MACHINE</option>
-                            <option value="DOUBLE_NEEDLE_LOCK_STITCH_MACHINE">DOUBLE NEEDLE LOCK STITCH MACHINE</option>
-                            <option value="DOUBLE_NEEDLE_SPLIT_BAR_MACHINE">DOUBLE NEEDLE SPLIT BAR MACHINE</option>
-                            <option value="EYELET_BUTTONHOLING_MACHINE">EYELET BUTTONHOLING MACHINE</option>
-                            <option value="FEED_OF_ARM_MACHINE">FEED OF ARM MACHINE</option>
-                            <option value="FLATLOCK_CYLINDER_BED_MACHINE">FLATLOCK CYLINDER BED MACHINE</option>
-                            <option value="FLATLOCK_BABY_CYLINDER_BED_MACHINE">FLATLOCK BABY CYLINDER BED MACHINE</option>
-                            <option value="FLATLOCK_CYLINDERBED_ELASTIC_ATTACH_MACHINE">FLATLOCK CYLINDERBED ELASTIC ATTACH MACHINE</option>
-                            <option value="FLATLOCK_FLATBED_MACHINE">FLATLOCK FLATBED MACHINE</option>
-                            <option value="FLATLOCK_FLATBED_TOP_FEED_MACHINE">FLATLOCK FLATBED TOP FEED MACHINE</option>
-                            <option value="FLATSEAMER_MACHINE">FLATSEAMER MACHINE</option>
-                            <option value="HANG_TAG_STRING_INSERTION_MACHINE">HANG TAG STRING INSERTION MACHINE</option>
-                            <option value="HEAT_TRANSFER_PRESS_MACHINE">HEAT TRANSFER PRESS MACHINE</option>
-                            <option value="INSEAM_IRON">INSEAM IRON</option>
-                            <option value="IRON_TABLE">IRON TABLE</option>
-                            <option value="MINI_PATTERN_SEAMER_MACHINE">MINI PATTERN SEAMER MACHINE</option>
-                            <option value="MULTI_NEEDLE_MACHINE">MULTI NEEDLE MACHINE</option>
-                            <option value="NORMAL_BUTTON_HOLE_MACHINE">NORMAL BUTTON HOLE MACHINE</option>
-                            <option value="OVERLOCK_CUFF_ATTACH_MACHINE">OVERLOCK CUFF ATTACH MACHINE</option>
-                            <option value="OVERLOCK_CYLINDER_BED_MACHINE">OVERLOCK CYLINDER BED MACHINE</option>
-                            <option value="OVERLOCK_MACHINE">OVERLOCK MACHINE</option>
-                            <option value="OVERLOCK_MACHINE_AND_BACK_LATCH_STITCH">OVERLOCK MACHINE AND BACK LATCH STITCH</option>
-                            <option value="OVERLOCK_NECK_RIB_ATTACH_MACHINE">OVERLOCK NECK RIB ATTACH MACHINE</option>
-                            <option value="PATTERN_SEWER_MACHINE">PATTERN SEWER MACHINE</option>
-                            <option value="POLO_SHIRT_PLACKET_AUTOMATION_MACHINE">POLO SHIRT PLACKET AUTOMATION MACHINE</option>
-                            <option value="QUILTING_MACHINE">QUILTING MACHINE</option>
-                            <option value="SINGLE_NEEDLE_EDGE_CUTTER_MACHINE">SINGLE NEEDLE EDGE CUTTER MACHINE</option>
-                            <option value="SINGLE_NEEDLE_FEED_MACHINE">SINGLE NEEDLE FEED MACHINE</option>
-                            <option value="SINGLE_NEEDLE_LOCK_STITCH_MACHINE">SINGLE NEEDLE LOCK STITCH MACHINE</option>
-                            <option value="SNAP_ATTACH_MACHINE">SNAP ATTACH MACHINE</option>
-                            <option value="ZIGZAG_STITCH_MACHINE">ZIGZAG STITCH MACHINE</option>
-                            <option value="Others">Others</option>
+                        <label for="editExistingRecordSelect">Select Performance Record *</label>
+                        <select id="editExistingRecordSelect" required>
+                            <option value="">Select Record</option>
                         </select>
                     </div>
                 </div>
                 
-                <div class="form-row" id="editPerfCustomMachineRow" style="display: none;">
-                    <div class="form-group">
-                        <label for="editPerfCustomMachineName">Custom Machine Name</label>
-                        <input type="text" id="editPerfCustomMachineName" placeholder="Enter custom machine name">
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="editPerfStdSMV">Standard SMV (min)</label>
-                        <input type="number" id="editPerfStdSMV" step="0.01" placeholder="e.g., 0.45">
-                    </div>
-                    <div class="form-group">
-                        <label for="editPerfWorkingSMV">Working SMV (min)</label>
-                        <input type="number" id="editPerfWorkingSMV" step="0.01" placeholder="e.g., 0.52">
-                    </div>
-                    <div class="form-group">
-                        <label for="editPerfEfficiency">Primary Efficiency (%)</label>
-                        <input type="number" id="editPerfEfficiency" min="0" max="200" step="0.1" placeholder="0-200%">
-                    </div>
-                </div>
-                
-                <!-- Other Machines Section -->
-                <h4 style="margin: 30px 0 20px 0; color: var(--primary-color); padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-                    <i class="fas fa-list"></i> Other Machines & Efficiencies
-                    <small style="color: var(--text-secondary); font-weight: normal; margin-left: 10px;">(Add multiple machines with their respective efficiencies)</small>
-                </h4>
-                
-                <div id="editOtherMachineEfficiencies" style="margin-bottom: 20px;">
-                    <!-- Other machine items will be added here dynamically -->
-                </div>
-                
-                <div style="text-align: center; margin: 20px 0;">
-                    <button id="addOtherMachineBtn" class="btn btn-secondary" style="padding: 10px 20px;">
-                        <i class="fas fa-plus-circle"></i> Add Another Machine
-                    </button>
-                </div>
-                
-                <!-- Template for other machine row -->
-                <template id="otherMachineTemplate">
-                    <div class="other-machine-row" style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <div style="flex: 2;">
-                                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Machine</div>
-                                <select class="other-machine-select" style="width: 100%; padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);">
-                                    <option value="">Select Machine</option>
-                                    <option value="FLATLOCK_CYLINDER_BED_FABRIC_CUTTER_MACHINE">FLATLOCK CYLINDER BED FABRIC CUTTER MACHINE</option>
-                                    <option value="5_HEAD_HEAT_TRANSFER_PRESS_MACHINE">5-HEAD HEAT TRANSFER PRESS MACHINE</option>
-                                    <option value="AUTO_POCKET_HEM_MACHINE">AUTO POCKET HEM MACHINE</option>
-                                    <option value="AUTO_POCKET_WELT_MACHINE">AUTO POCKET WELT MACHINE</option>
-                                    <option value="AUTO_RIVET_MACHINE">AUTO RIVET MACHINE</option>
-                                    <option value="AUTOMATIC_BELT_LOOP_ATTACH_MACHINE">AUTOMATIC BELT LOOP ATTACH MACHINE</option>
-                                    <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING_MACHINES">AUTOMATIC FLAT BOTTOM HEMMING MACHINES</option>
-                                    <option value="AUTOMATIC_LABEL_ASSEMBLY_MACHINE">AUTOMATIC LABEL ASSEMBLY MACHINE</option>
-                                    <option value="AUTOMATIC_LABEL_FIXING_MACHINE">AUTOMATIC LABEL FIXING MACHINE</option>
-                                    <option value="AUTOMATIC_POCKET_FACING_STITCHING_MACHINE">AUTOMATIC POCKET FACING STITCHING MACHINE</option>
-                                    <option value="AUTOMATIC_POCKET_SETTER_MACHINE">AUTOMATIC POCKET SETTER MACHINE</option>
-                                    <option value="AUTOMATIC_STRING_THRUSTING_MACHINE">AUTOMATIC STRING THRUSTING MACHINE</option>
-                                    <option value="BARTACKING_MACHINE">BARTACKING MACHINE</option>
-                                    <option value="BLIND_HEM_MACHINE">BLIND HEM MACHINE</option>
-                                    <option value="BLIND_LOOP_MAKING_MACHINE">BLIND LOOP MAKING MACHINE</option>
-                                    <option value="BOTTOM_HEM_MACHINE">BOTTOM HEM MACHINE</option>
-                                    <option value="BUTTON_ATTACH_MACHINE">BUTTON ATTACH MACHINE</option>
-                                    <option value="DOUBLE_NEEDLE_CHAIN_STITCH_MACHINE">DOUBLE NEEDLE CHAIN STITCH MACHINE</option>
-                                    <option value="DOUBLE_NEEDLE_LOCK_STITCH_MACHINE">DOUBLE NEEDLE LOCK STITCH MACHINE</option>
-                                    <option value="DOUBLE_NEEDLE_SPLIT_BAR_MACHINE">DOUBLE NEEDLE SPLIT BAR MACHINE</option>
-                                    <option value="EYELET_BUTTONHOLING_MACHINE">EYELET BUTTONHOLING MACHINE</option>
-                                    <option value="FEED_OF_ARM_MACHINE">FEED OF ARM MACHINE</option>
-                                    <option value="FLATLOCK_CYLINDER_BED_MACHINE">FLATLOCK CYLINDER BED MACHINE</option>
-                                    <option value="FLATLOCK_BABY_CYLINDER_BED_MACHINE">FLATLOCK BABY CYLINDER BED MACHINE</option>
-                                    <option value="FLATLOCK_CYLINDERBED_ELASTIC_ATTACH_MACHINE">FLATLOCK CYLINDERBED ELASTIC ATTACH MACHINE</option>
-                                    <option value="FLATLOCK_FLATBED_MACHINE">FLATLOCK FLATBED MACHINE</option>
-                                    <option value="FLATLOCK_FLATBED_TOP_FEED_MACHINE">FLATLOCK FLATBED TOP FEED MACHINE</option>
-                                    <option value="FLATSEAMER_MACHINE">FLATSEAMER MACHINE</option>
-                                    <option value="HANG_TAG_STRING_INSERTION_MACHINE">HANG TAG STRING INSERTION MACHINE</option>
-                                    <option value="HEAT_TRANSFER_PRESS_MACHINE">HEAT TRANSFER PRESS MACHINE</option>
+                <div class="form-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h4 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fas fa-cogs"></i> Edit Performance Record</h4>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editExistingOperation">Operation Name</label>
+                            <input type="text" id="editExistingOperation" placeholder="e.g., Hemming">
+                        </div>
+                        <div class="form-group">
+                            <label for="editExistingMachine">Machine Name</label>
+                            <select id="editExistingMachine">
+                                <optgroup label="KANSAI Family">
+                                    <option value="KANSAI">KANSAI</option>
+                                    <option value="FLATSEAMER">FLATSEAMER</option>
+                                    <option value="MULTI_NEEDLE">MULTI NEEDLE</option>
+                                </optgroup>
+                                <optgroup label="Single Needle Family">
+                                    <option value="SNLS">SNLS (Single Needle Lock Stitch)</option>
+                                    <option value="SNCS">SNCS (Single Needle Chain Stitch)</option>
+                                </optgroup>
+                                <optgroup label="Double Needle Family">
+                                    <option value="DNLS">DNLS (Double Needle Lock Stitch)</option>
+                                </optgroup>
+                                <optgroup label="Feed of Arm">
+                                    <option value="FOA">FOA (Feed Of Arm)</option>
+                                </optgroup>
+                                <optgroup label="Overlock Family">
+                                    <option value="OVERLOCK">OVERLOCK</option>
+                                </optgroup>
+                                <optgroup label="Flatlock Family">
+                                    <option value="FLATLOCK">FLATLOCK</option>
+                                </optgroup>
+                                <optgroup label="Button & Buttonhole">
+                                    <option value="BUTTON_ATTACH">BUTTON ATTACH</option>
+                                    <option value="BUTTONHOLE">BUTTONHOLE</option>
+                                </optgroup>
+                                <optgroup label="Bartack">
+                                    <option value="BARTACK">BARTACK</option>
+                                </optgroup>
+                                <optgroup label="Automation Machines">
+                                    <option value="AUTOMATIC_DRAWCORD">AUTOMATIC DRAWCORD</option>
+                                    <option value="AUTO_POCKET_HEM">AUTO POCKET HEM</option>
+                                    <option value="AUTO_POCKET_WELT">AUTO POCKET WELT</option>
+                                    <option value="AUTOMATIC_POCKET_SETTER">AUTOMATIC POCKET SETTER</option>
+                                    <option value="AUTOMATIC_BELT_LOOP_ATTACH">AUTOMATIC BELT LOOP ATTACH</option>
+                                    <option value="BLIND_LOOP_MAKING">BLIND LOOP MAKING</option>
+                                    <option value="AUTOMATIC_LABEL_ASSEMBLY">AUTOMATIC LABEL ASSEMBLY</option>
+                                    <option value="AUTOMATIC_LABEL_FIXING">AUTOMATIC LABEL FIXING</option>
+                                    <option value="HANG_TAG_STRING_INSERTION">HANG TAG STRING INSERTION</option>
+                                    <option value="AUTO_RIVET">AUTO RIVET</option>
+                                    <option value="SNAP_ATTACH">SNAP ATTACH</option>
+                                    <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING">AUTOMATIC FLAT BOTTOM HEMMING</option>
+                                </optgroup>
+                                <optgroup label="Hemming Machines">
+                                    <option value="BLIND_HEM">BLIND HEM</option>
+                                    <option value="BOTTOM_HEM">BOTTOM HEM</option>
+                                </optgroup>
+                                <optgroup label="Special Machines">
+                                    <option value="POLO_SHIRT_PLACKET_AUTOMATION">POLO SHIRT PLACKET AUTOMATION</option>
+                                    <option value="PATTERN_SEWER">PATTERN SEWER</option>
+                                    <option value="MINI_PATTERN_SEAMER">MINI PATTERN SEAMER</option>
+                                    <option value="QUILTING">QUILTING</option>
+                                    <option value="ZIGZAG_STITCH">ZIGZAG STITCH</option>
+                                </optgroup>
+                                <optgroup label="Pressing & Heat">
+                                    <option value="HEAT_SEAL">HEAT SEAL / HEAT TRANSFER PRESS</option>
                                     <option value="INSEAM_IRON">INSEAM IRON</option>
                                     <option value="IRON_TABLE">IRON TABLE</option>
-                                    <option value="MINI_PATTERN_SEAMER_MACHINE">MINI PATTERN SEAMER MACHINE</option>
-                                    <option value="MULTI_NEEDLE_MACHINE">MULTI NEEDLE MACHINE</option>
-                                    <option value="NORMAL_BUTTON_HOLE_MACHINE">NORMAL BUTTON HOLE MACHINE</option>
-                                    <option value="OVERLOCK_CUFF_ATTACH_MACHINE">OVERLOCK CUFF ATTACH MACHINE</option>
-                                    <option value="OVERLOCK_CYLINDER_BED_MACHINE">OVERLOCK CYLINDER BED MACHINE</option>
-                                    <option value="OVERLOCK_MACHINE">OVERLOCK MACHINE</option>
-                                    <option value="OVERLOCK_MACHINE_AND_BACK_LATCH_STITCH">OVERLOCK MACHINE AND BACK LATCH STITCH</option>
-                                    <option value="OVERLOCK_NECK_RIB_ATTACH_MACHINE">OVERLOCK NECK RIB ATTACH MACHINE</option>
-                                    <option value="PATTERN_SEWER_MACHINE">PATTERN SEWER MACHINE</option>
-                                    <option value="POLO_SHIRT_PLACKET_AUTOMATION_MACHINE">POLO SHIRT PLACKET AUTOMATION MACHINE</option>
-                                    <option value="QUILTING_MACHINE">QUILTING MACHINE</option>
-                                    <option value="SINGLE_NEEDLE_EDGE_CUTTER_MACHINE">SINGLE NEEDLE EDGE CUTTER MACHINE</option>
-                                    <option value="SINGLE_NEEDLE_FEED_MACHINE">SINGLE NEEDLE FEED MACHINE</option>
-                                    <option value="SINGLE_NEEDLE_LOCK_STITCH_MACHINE">SINGLE NEEDLE LOCK STITCH MACHINE</option>
-                                    <option value="SNAP_ATTACH_MACHINE">SNAP ATTACH MACHINE</option>
-                                    <option value="ZIGZAG_STITCH_MACHINE">ZIGZAG STITCH MACHINE</option>
+                                </optgroup>
+                                <option value="Others">Others</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editExistingStdSMV">Standard SMV (min)</label>
+                            <input type="number" id="editExistingStdSMV" step="0.01" placeholder="e.g., 0.45">
+                        </div>
+                        <div class="form-group">
+                            <label for="editExistingWorkingSMV">Working SMV (min)</label>
+                            <input type="number" id="editExistingWorkingSMV" step="0.01" placeholder="e.g., 0.52">
+                        </div>
+                        <div class="form-group">
+                            <label for="editExistingEfficiency">Efficiency (%)</label>
+                            <input type="number" id="editExistingEfficiency" min="0" max="200" step="0.1" placeholder="0-200%">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editExistingOperationGrade">Operation Complexity Grade</label>
+                            <select id="editExistingOperationGrade">
+                                <option value="">Select Grade</option>
+                                <option value="A">Grade A</option>
+                                <option value="B">Grade B</option>
+                                <option value="C">Grade C</option>
+                                <option value="D">Grade D</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row" id="editExistingCustomMachineRow" style="display: none;">
+                        <div class="form-group">
+                            <label for="editExistingCustomMachineName">Custom Machine Name</label>
+                            <input type="text" id="editExistingCustomMachineName" placeholder="Enter custom machine name">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h4 style="margin-bottom: 15px; color: var(--success-color);"><i class="fas fa-plus-circle"></i> Add Other Machines & Efficiencies</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
+                        Add other machines this operator knows how to use. This will affect the grading criteria.
+                    </p>
+                    
+                    <div id="otherMachinesContainer">
+                        <!-- Other machines will be added here dynamically -->
+                        <div class="other-machine-item" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                            <div style="flex: 2;">
+                                <select class="other-machine-select" style="width: 100%;">
+                                    <option value="">Select Machine</option>
+                                    <optgroup label="KANSAI Family">
+                                        <option value="KANSAI">KANSAI</option>
+                                        <option value="FLATSEAMER">FLATSEAMER</option>
+                                        <option value="MULTI_NEEDLE">MULTI NEEDLE</option>
+                                    </optgroup>
+                                    <optgroup label="Single Needle Family">
+                                        <option value="SNLS">SNLS (Single Needle Lock Stitch)</option>
+                                        <option value="SNCS">SNCS (Single Needle Chain Stitch)</option>
+                                    </optgroup>
+                                    <optgroup label="Double Needle Family">
+                                        <option value="DNLS">DNLS (Double Needle Lock Stitch)</option>
+                                    </optgroup>
+                                    <optgroup label="Feed of Arm">
+                                        <option value="FOA">FOA (Feed Of Arm)</option>
+                                    </optgroup>
+                                    <optgroup label="Overlock Family">
+                                        <option value="OVERLOCK">OVERLOCK</option>
+                                    </optgroup>
+                                    <optgroup label="Flatlock Family">
+                                        <option value="FLATLOCK">FLATLOCK</option>
+                                    </optgroup>
+                                    <optgroup label="Button & Buttonhole">
+                                        <option value="BUTTON_ATTACH">BUTTON ATTACH</option>
+                                        <option value="BUTTONHOLE">BUTTONHOLE</option>
+                                    </optgroup>
+                                    <optgroup label="Bartack">
+                                        <option value="BARTACK">BARTACK</option>
+                                    </optgroup>
+                                    <optgroup label="Automation Machines">
+                                        <option value="AUTOMATIC_DRAWCORD">AUTOMATIC DRAWCORD</option>
+                                        <option value="AUTO_POCKET_HEM">AUTO POCKET HEM</option>
+                                        <option value="AUTO_POCKET_WELT">AUTO POCKET WELT</option>
+                                        <option value="AUTOMATIC_POCKET_SETTER">AUTOMATIC POCKET SETTER</option>
+                                        <option value="AUTOMATIC_BELT_LOOP_ATTACH">AUTOMATIC BELT LOOP ATTACH</option>
+                                        <option value="BLIND_LOOP_MAKING">BLIND LOOP MAKING</option>
+                                        <option value="AUTOMATIC_LABEL_ASSEMBLY">AUTOMATIC LABEL ASSEMBLY</option>
+                                        <option value="AUTOMATIC_LABEL_FIXING">AUTOMATIC LABEL FIXING</option>
+                                        <option value="HANG_TAG_STRING_INSERTION">HANG TAG STRING INSERTION</option>
+                                        <option value="AUTO_RIVET">AUTO RIVET</option>
+                                        <option value="SNAP_ATTACH">SNAP ATTACH</option>
+                                        <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING">AUTOMATIC FLAT BOTTOM HEMMING</option>
+                                    </optgroup>
+                                    <optgroup label="Hemming Machines">
+                                        <option value="BLIND_HEM">BLIND HEM</option>
+                                        <option value="BOTTOM_HEM">BOTTOM HEM</option>
+                                    </optgroup>
+                                    <optgroup label="Special Machines">
+                                        <option value="POLO_SHIRT_PLACKET_AUTOMATION">POLO SHIRT PLACKET AUTOMATION</option>
+                                        <option value="PATTERN_SEWER">PATTERN SEWER</option>
+                                        <option value="MINI_PATTERN_SEAMER">MINI PATTERN SEAMER</option>
+                                        <option value="QUILTING">QUILTING</option>
+                                        <option value="ZIGZAG_STITCH">ZIGZAG STITCH</option>
+                                    </optgroup>
+                                    <optgroup label="Pressing & Heat">
+                                        <option value="HEAT_SEAL">HEAT SEAL / HEAT TRANSFER PRESS</option>
+                                        <option value="INSEAM_IRON">INSEAM IRON</option>
+                                        <option value="IRON_TABLE">IRON TABLE</option>
+                                    </optgroup>
                                     <option value="Others">Others</option>
                                 </select>
                             </div>
                             <div style="flex: 1;">
-                                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Efficiency (%)</div>
-                                <input type="number" class="other-machine-efficiency" min="0" max="200" step="0.1" placeholder="0-200%" style="width: 100%; padding: 8px 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);">
+                                <input type="number" class="other-machine-efficiency" min="0" max="200" step="0.1" placeholder="Efficiency %">
                             </div>
-                            <div style="display: flex; align-items: center; padding-top: 20px;">
-                                <button type="button" class="remove-other-machine" style="background: rgba(248, 37, 133, 0.1); border: 1px solid rgba(248, 37, 133, 0.3); color: var(--accent-color); padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                                    <i class="fas fa-trash"></i> Remove
+                            <div>
+                                <button type="button" class="btn-icon remove-other-machine" title="Remove">
+                                    <i class="fas fa-times"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
-                </template>
+                    
+                    <button type="button" id="addOtherMachineBtn" class="btn btn-secondary" style="margin-top: 10px;">
+                        <i class="fas fa-plus"></i> Add Another Machine
+                    </button>
+                    
+                    <div id="existingOtherMachines" style="margin-top: 20px;">
+                        <h5 style="color: var(--text-secondary); margin-bottom: 10px;">Existing Other Machines:</h5>
+                        <div id="existingOtherMachinesList" style="max-height: 150px; overflow-y: auto;">
+                            <!-- Existing other machines will be listed here -->
+                        </div>
+                    </div>
+                </div>
                 
-                <div class="form-actions" style="margin-top: 25px;">
-                    <button type="button" class="btn btn-secondary" data-modal="editPerformanceDetailsModal" style="padding: 12px 24px;">Cancel</button>
-                    <button type="button" id="savePerformanceDetailsBtn" class="btn btn-primary" style="padding: 12px 24px;">Save All Performance Details</button>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" data-modal="editExistingDetailsModal">Cancel</button>
+                    <button type="button" id="saveExistingDetailsBtn" class="btn btn-primary">Save All Changes</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Group Operators Modal with search and sorting -->
+    <!-- Group Operators Modal -->
     <div id="groupOperatorsModal" class="modal group-operators-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1438,6 +1718,19 @@
                 </div>
                 
                 <div class="group-operators-list" id="groupOperatorsList" style="max-height: 400px; overflow-y: auto;">
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>S.No.</th>
+                                <th>Operator ID</th>
+                                <th>Name</th>
+                                <th>Line</th>
+                                <th>Skill Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="groupOperatorsTableBody">
+                        </tbody>
+                    </table>
                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" data-modal="groupOperatorsModal">Close</button>
@@ -1446,7 +1739,7 @@
         </div>
     </div>
 
-    <!-- Add Performance Modal - UPDATED with complete machine list -->
+    <!-- Add Performance Modal -->
     <div id="addPerformanceModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1483,55 +1776,64 @@
                         <div class="form-group">
                             <label for="perfMachine">Machine Name *</label>
                             <select id="perfMachine" required>
-                                <option value="">Select Machine</option>
-                                <option value="FLATLOCK_CYLINDER_BED_FABRIC_CUTTER_MACHINE">FLATLOCK CYLINDER BED FABRIC CUTTER MACHINE</option>
-                                <option value="5_HEAD_HEAT_TRANSFER_PRESS_MACHINE">5-HEAD HEAT TRANSFER PRESS MACHINE</option>
-                                <option value="AUTO_POCKET_HEM_MACHINE">AUTO POCKET HEM MACHINE</option>
-                                <option value="AUTO_POCKET_WELT_MACHINE">AUTO POCKET WELT MACHINE</option>
-                                <option value="AUTO_RIVET_MACHINE">AUTO RIVET MACHINE</option>
-                                <option value="AUTOMATIC_BELT_LOOP_ATTACH_MACHINE">AUTOMATIC BELT LOOP ATTACH MACHINE</option>
-                                <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING_MACHINES">AUTOMATIC FLAT BOTTOM HEMMING MACHINES</option>
-                                <option value="AUTOMATIC_LABEL_ASSEMBLY_MACHINE">AUTOMATIC LABEL ASSEMBLY MACHINE</option>
-                                <option value="AUTOMATIC_LABEL_FIXING_MACHINE">AUTOMATIC LABEL FIXING MACHINE</option>
-                                <option value="AUTOMATIC_POCKET_FACING_STITCHING_MACHINE">AUTOMATIC POCKET FACING STITCHING MACHINE</option>
-                                <option value="AUTOMATIC_POCKET_SETTER_MACHINE">AUTOMATIC POCKET SETTER MACHINE</option>
-                                <option value="AUTOMATIC_STRING_THRUSTING_MACHINE">AUTOMATIC STRING THRUSTING MACHINE</option>
-                                <option value="BARTACKING_MACHINE">BARTACKING MACHINE</option>
-                                <option value="BLIND_HEM_MACHINE">BLIND HEM MACHINE</option>
-                                <option value="BLIND_LOOP_MAKING_MACHINE">BLIND LOOP MAKING MACHINE</option>
-                                <option value="BOTTOM_HEM_MACHINE">BOTTOM HEM MACHINE</option>
-                                <option value="BUTTON_ATTACH_MACHINE">BUTTON ATTACH MACHINE</option>
-                                <option value="DOUBLE_NEEDLE_CHAIN_STITCH_MACHINE">DOUBLE NEEDLE CHAIN STITCH MACHINE</option>
-                                <option value="DOUBLE_NEEDLE_LOCK_STITCH_MACHINE">DOUBLE NEEDLE LOCK STITCH MACHINE</option>
-                                <option value="DOUBLE_NEEDLE_SPLIT_BAR_MACHINE">DOUBLE NEEDLE SPLIT BAR MACHINE</option>
-                                <option value="EYELET_BUTTONHOLING_MACHINE">EYELET BUTTONHOLING MACHINE</option>
-                                <option value="FEED_OF_ARM_MACHINE">FEED OF ARM MACHINE</option>
-                                <option value="FLATLOCK_CYLINDER_BED_MACHINE">FLATLOCK CYLINDER BED MACHINE</option>
-                                <option value="FLATLOCK_BABY_CYLINDER_BED_MACHINE">FLATLOCK BABY CYLINDER BED MACHINE</option>
-                                <option value="FLATLOCK_CYLINDERBED_ELASTIC_ATTACH_MACHINE">FLATLOCK CYLINDERBED ELASTIC ATTACH MACHINE</option>
-                                <option value="FLATLOCK_FLATBED_MACHINE">FLATLOCK FLATBED MACHINE</option>
-                                <option value="FLATLOCK_FLATBED_TOP_FEED_MACHINE">FLATLOCK FLATBED TOP FEED MACHINE</option>
-                                <option value="FLATSEAMER_MACHINE">FLATSEAMER MACHINE</option>
-                                <option value="HANG_TAG_STRING_INSERTION_MACHINE">HANG TAG STRING INSERTION MACHINE</option>
-                                <option value="HEAT_TRANSFER_PRESS_MACHINE">HEAT TRANSFER PRESS MACHINE</option>
-                                <option value="INSEAM_IRON">INSEAM IRON</option>
-                                <option value="IRON_TABLE">IRON TABLE</option>
-                                <option value="MINI_PATTERN_SEAMER_MACHINE">MINI PATTERN SEAMER MACHINE</option>
-                                <option value="MULTI_NEEDLE_MACHINE">MULTI NEEDLE MACHINE</option>
-                                <option value="NORMAL_BUTTON_HOLE_MACHINE">NORMAL BUTTON HOLE MACHINE</option>
-                                <option value="OVERLOCK_CUFF_ATTACH_MACHINE">OVERLOCK CUFF ATTACH MACHINE</option>
-                                <option value="OVERLOCK_CYLINDER_BED_MACHINE">OVERLOCK CYLINDER BED MACHINE</option>
-                                <option value="OVERLOCK_MACHINE">OVERLOCK MACHINE</option>
-                                <option value="OVERLOCK_MACHINE_AND_BACK_LATCH_STITCH">OVERLOCK MACHINE AND BACK LATCH STITCH</option>
-                                <option value="OVERLOCK_NECK_RIB_ATTACH_MACHINE">OVERLOCK NECK RIB ATTACH MACHINE</option>
-                                <option value="PATTERN_SEWER_MACHINE">PATTERN SEWER MACHINE</option>
-                                <option value="POLO_SHIRT_PLACKET_AUTOMATION_MACHINE">POLO SHIRT PLACKET AUTOMATION MACHINE</option>
-                                <option value="QUILTING_MACHINE">QUILTING MACHINE</option>
-                                <option value="SINGLE_NEEDLE_EDGE_CUTTER_MACHINE">SINGLE NEEDLE EDGE CUTTER MACHINE</option>
-                                <option value="SINGLE_NEEDLE_FEED_MACHINE">SINGLE NEEDLE FEED MACHINE</option>
-                                <option value="SINGLE_NEEDLE_LOCK_STITCH_MACHINE">SINGLE NEEDLE LOCK STITCH MACHINE</option>
-                                <option value="SNAP_ATTACH_MACHINE">SNAP ATTACH MACHINE</option>
-                                <option value="ZIGZAG_STITCH_MACHINE">ZIGZAG STITCH MACHINE</option>
+                                <optgroup label="KANSAI Family">
+                                    <option value="KANSAI">KANSAI</option>
+                                    <option value="FLATSEAMER">FLATSEAMER</option>
+                                    <option value="MULTI_NEEDLE">MULTI NEEDLE</option>
+                                </optgroup>
+                                <optgroup label="Single Needle Family">
+                                    <option value="SNLS">SNLS (Single Needle Lock Stitch)</option>
+                                    <option value="SNCS">SNCS (Single Needle Chain Stitch)</option>
+                                </optgroup>
+                                <optgroup label="Double Needle Family">
+                                    <option value="DNLS">DNLS (Double Needle Lock Stitch)</option>
+                                </optgroup>
+                                <optgroup label="Feed of Arm">
+                                    <option value="FOA">FOA (Feed Of Arm)</option>
+                                </optgroup>
+                                <optgroup label="Overlock Family">
+                                    <option value="OVERLOCK">OVERLOCK</option>
+                                </optgroup>
+                                <optgroup label="Flatlock Family">
+                                    <option value="FLATLOCK">FLATLOCK</option>
+                                </optgroup>
+                                <optgroup label="Button & Buttonhole">
+                                    <option value="BUTTON_ATTACH">BUTTON ATTACH</option>
+                                    <option value="BUTTONHOLE">BUTTONHOLE</option>
+                                </optgroup>
+                                <optgroup label="Bartack">
+                                    <option value="BARTACK">BARTACK</option>
+                                </optgroup>
+                                <optgroup label="Automation Machines">
+                                    <option value="AUTOMATIC_DRAWCORD">AUTOMATIC DRAWCORD</option>
+                                    <option value="AUTO_POCKET_HEM">AUTO POCKET HEM</option>
+                                    <option value="AUTO_POCKET_WELT">AUTO POCKET WELT</option>
+                                    <option value="AUTOMATIC_POCKET_SETTER">AUTOMATIC POCKET SETTER</option>
+                                    <option value="AUTOMATIC_BELT_LOOP_ATTACH">AUTOMATIC BELT LOOP ATTACH</option>
+                                    <option value="BLIND_LOOP_MAKING">BLIND LOOP MAKING</option>
+                                    <option value="AUTOMATIC_LABEL_ASSEMBLY">AUTOMATIC LABEL ASSEMBLY</option>
+                                    <option value="AUTOMATIC_LABEL_FIXING">AUTOMATIC LABEL FIXING</option>
+                                    <option value="HANG_TAG_STRING_INSERTION">HANG TAG STRING INSERTION</option>
+                                    <option value="AUTO_RIVET">AUTO RIVET</option>
+                                    <option value="SNAP_ATTACH">SNAP ATTACH</option>
+                                    <option value="AUTOMATIC_FLAT_BOTTOM_HEMMING">AUTOMATIC FLAT BOTTOM HEMMING</option>
+                                </optgroup>
+                                <optgroup label="Hemming Machines">
+                                    <option value="BLIND_HEM">BLIND HEM</option>
+                                    <option value="BOTTOM_HEM">BOTTOM HEM</option>
+                                </optgroup>
+                                <optgroup label="Special Machines">
+                                    <option value="POLO_SHIRT_PLACKET_AUTOMATION">POLO SHIRT PLACKET AUTOMATION</option>
+                                    <option value="PATTERN_SEWER">PATTERN SEWER</option>
+                                    <option value="MINI_PATTERN_SEAMER">MINI PATTERN SEAMER</option>
+                                    <option value="QUILTING">QUILTING</option>
+                                    <option value="ZIGZAG_STITCH">ZIGZAG STITCH</option>
+                                </optgroup>
+                                <optgroup label="Pressing & Heat">
+                                    <option value="HEAT_SEAL">HEAT SEAL / HEAT TRANSFER PRESS</option>
+                                    <option value="INSEAM_IRON">INSEAM IRON</option>
+                                    <option value="IRON_TABLE">IRON TABLE</option>
+                                </optgroup>
                                 <option value="Others">Others</option>
                             </select>
                         </div>
@@ -1551,19 +1853,15 @@
                             <label for="perfWorkingSMV">Operator Working SMV (min) *</label>
                             <input type="number" id="perfWorkingSMV" step="0.01" required placeholder="e.g., 0.52">
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
-                            <label for="perfOtherMachines">Other Machines Used</label>
-                            <div class="multi-select" id="perfOtherMachinesSelect">
-                                <div class="multi-select-display">
-                                    <span>Select machines...</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                                <div class="multi-select-options" id="perfOtherMachinesOptions">
-                                    <!-- Machine options will be populated dynamically from full machine list -->
-                                </div>
-                                <div class="selected-options" id="perfSelectedOtherMachines">
-                                </div>
+                            <label>Cycle Times (seconds)</label>
+                            <div id="manualCycleTimes">
                             </div>
+                            <button type="button" class="btn btn-secondary" id="addCycleTimeBtn">
+                                <i class="fas fa-plus"></i> Add Cycle Time
+                            </button>
                         </div>
                     </div>
                     <div class="form-actions">
@@ -1607,8 +1905,8 @@
                     <div class="smv-breakdown">
                         <h4><i class="fas fa-calculator"></i> Calculation Formula</h4>
                         <div class="formula-display">
-                            Working SMV = (Average Cycle Time in seconds ÷ 60) × (1 + Allowance%)<br>
-                            Where: Allowance = Personal (11%) + Contingency (2%) + Machine Allowance
+                            Working SMV = (Average Cycle Time in seconds ÷ 60) × (1 + 16.67%)<br>
+                            Where: General Allowance = 16.67%
                         </div>
                     </div>
                     
@@ -1654,11 +1952,23 @@
                             <input type="number" id="editRecordWorkingSMV" step="0.01" required>
                         </div>
                     </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editRecordOperationGrade">Operation Complexity Grade</label>
+                            <select id="editRecordOperationGrade">
+                                <option value="">Select Grade</option>
+                                <option value="A">Grade A</option>
+                                <option value="B">Grade B</option>
+                                <option value="C">Grade C</option>
+                                <option value="D">Grade D</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label for="editRecordCycleTimes">Cycle Times (seconds, comma-separated)</label>
                         <input type="text" id="editRecordCycleTimes" placeholder="e.g., 25.3, 26.1, 24.8">
                         <small style="color: var(--text-secondary); display: block; margin-top: 5px;">
-                            Enter cycle times separated by commas. Changing these will recalculate Working SMV with machine-specific allowances.
+                            Enter cycle times separated by commas. Changing these will recalculate Working SMV with general allowance.
                         </small>
                     </div>
                     <div class="form-actions">
@@ -1678,6 +1988,6 @@
         </div>
     </div>
 
-    <script type="module" src="app.js"></script>
+    <script src="app.js" type="module"></script>
 </body>
 </html>
