@@ -1,5 +1,3 @@
-// skill-matrix-v18.js - Complete JavaScript for Sidney Apparels OPS v18
-
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp, where } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
@@ -25,6 +23,7 @@ let performanceData = [];
 let selectedOperatorId = null;
 let lineDetails = JSON.parse(localStorage.getItem('lineDetails')) || {};
 let operatorMachineSkills = JSON.parse(localStorage.getItem('operatorMachineSkills')) || {};
+let operatorAllocatedSkills = JSON.parse(localStorage.getItem('operatorAllocatedSkills')) || {};
 let lastAddedOperatorId = null;
 
 // Supervisor mapping
@@ -64,8 +63,74 @@ const supervisorMapping = {
     'S-32': 'KALU CHARAN'
 };
 
-// Stopwatch variables
+// Machine families grouped for dropdowns (simplified for v17)
+const machineFamilies = {
+    'KANSAI Family': [
+        'KANSAI',
+        'FLATSEAMER',
+        'MULTI_NEEDLE'
+    ],
+    'Single Needle Family': [
+        'SNLS',
+        'SNCS'
+    ],
+    'Double Needle Family': [
+        'DNLS'
+    ],
+    'Feed of Arm': [
+        'FOA'
+    ],
+    'Overlock Family': [
+        'OVERLOCK'
+    ],
+    'Flatlock Family': [
+        'FLATLOCK'
+    ],
+    'Button & Buttonhole': [
+        'BUTTON_ATTACH',
+        'BUTTONHOLE'
+    ],
+    'Bartack': [
+        'BARTACK'
+    ],
+    'Automation Machines': [
+        'AUTOMATIC_DRAWCORD',
+        'AUTO_POCKET_HEM',
+        'AUTO_POCKET_WELT',
+        'AUTOMATIC_POCKET_SETTER',
+        'AUTOMATIC_BELT_LOOP_ATTACH',
+        'BLIND_LOOP_MAKING',
+        'AUTOMATIC_LABEL_ASSEMBLY',
+        'AUTOMATIC_LABEL_FIXING',
+        'HANG_TAG_STRING_INSERTION',
+        'AUTO_RIVET',
+        'SNAP_ATTACH',
+        'AUTOMATIC_FLAT_BOTTOM_HEMMING'
+    ],
+    'Hemming Machines': [
+        'BLIND_HEM',
+        'BOTTOM_HEM'
+    ],
+    'Special Machines': [
+        'POLO_SHIRT_PLACKET_AUTOMATION',
+        'PATTERN_SEWER',
+        'MINI_PATTERN_SEAMER',
+        'QUILTING',
+        'ZIGZAG_STITCH'
+    ],
+    'Pressing & Heat': [
+        'HEAT_SEAL',
+        'INSEAM_IRON',
+        'IRON_TABLE'
+    ],
+    'Others': [
+        'Others'
+    ]
+};
+
+// Stopwatch variables with pause functionality
 let stopwatchRunning = false;
+let stopwatchPaused = false;
 let stopwatchStartTime = 0;
 let stopwatchTotalElapsed = 0;
 let lapStartTime = 0;
@@ -79,118 +144,10 @@ let cycleCount = 3;
 let efficiencyChart = null;
 let linePerformanceChart = null;
 let machinePerformanceChart = null;
-let skillDistributionChart = null;
-let skillGroupsBarChart = null;
+let weeklyTrendChart = null;
 
-// Machine allowance mapping - Updated with all machines (default 7% for all)
-const machineAllowances = {
-    'FLATLOCK_CYLINDER_BED_FABRIC_CUTTER_MACHINE': 7,
-    '5_HEAD_HEAT_TRANSFER_PRESS_MACHINE': 7,
-    'AUTO_POCKET_HEM_MACHINE': 7,
-    'AUTO_POCKET_WELT_MACHINE': 7,
-    'AUTO_RIVET_MACHINE': 7,
-    'AUTOMATIC_BELT_LOOP_ATTACH_MACHINE': 7,
-    'AUTOMATIC_FLAT_BOTTOM_HEMMING_MACHINES': 7,
-    'AUTOMATIC_LABEL_ASSEMBLY_MACHINE': 7,
-    'AUTOMATIC_LABEL_FIXING_MACHINE': 7,
-    'AUTOMATIC_POCKET_FACING_STITCHING_MACHINE': 7,
-    'AUTOMATIC_POCKET_SETTER_MACHINE': 7,
-    'AUTOMATIC_STRING_THRUSTING_MACHINE': 7,
-    'BARTACKING_MACHINE': 7,
-    'BLIND_HEM_MACHINE': 7,
-    'BLIND_LOOP_MAKING_MACHINE': 7,
-    'BOTTOM_HEM_MACHINE': 7,
-    'BUTTON_ATTACH_MACHINE': 7,
-    'DOUBLE_NEEDLE_CHAIN_STITCH_MACHINE': 7,
-    'DOUBLE_NEEDLE_LOCK_STITCH_MACHINE': 7,
-    'DOUBLE_NEEDLE_SPLIT_BAR_MACHINE': 7,
-    'EYELET_BUTTONHOLING_MACHINE': 7,
-    'FEED_OF_ARM_MACHINE': 7,
-    'FLATLOCK_CYLINDER_BED_MACHINE': 7,
-    'FLATLOCK_BABY_CYLINDER_BED_MACHINE': 7,
-    'FLATLOCK_CYLINDERBED_ELASTIC_ATTACH_MACHINE': 7,
-    'FLATLOCK_FLATBED_MACHINE': 7,
-    'FLATLOCK_FLATBED_TOP_FEED_MACHINE': 7,
-    'FLATSEAMER_MACHINE': 7,
-    'HANG_TAG_STRING_INSERTION_MACHINE': 7,
-    'HEAT_TRANSFER_PRESS_MACHINE': 7,
-    'INSEAM_IRON': 7,
-    'IRON_TABLE': 7,
-    'MINI_PATTERN_SEAMER_MACHINE': 7,
-    'MULTI_NEEDLE_MACHINE': 7,
-    'NORMAL_BUTTON_HOLE_MACHINE': 7,
-    'OVERLOCK_CUFF_ATTACH_MACHINE': 7,
-    'OVERLOCK_CYLINDER_BED_MACHINE': 7,
-    'OVERLOCK_MACHINE': 7,
-    'OVERLOCK_MACHINE_AND_BACK_LATCH_STITCH': 7,
-    'OVERLOCK_NECK_RIB_ATTACH_MACHINE': 7,
-    'PATTERN_SEWER_MACHINE': 7,
-    'POLO_SHIRT_PLACKET_AUTOMATION_MACHINE': 7,
-    'QUILTING_MACHINE': 7,
-    'SINGLE_NEEDLE_EDGE_CUTTER_MACHINE': 7,
-    'SINGLE_NEEDLE_FEED_MACHINE': 7,
-    'SINGLE_NEEDLE_LOCK_STITCH_MACHINE': 7,
-    'SNAP_ATTACH_MACHINE': 7,
-    'ZIGZAG_STITCH_MACHINE': 7,
-    'Others': 7
-};
-
-// Complete machine list for dropdowns
-const completeMachineList = [
-    'FLATLOCK_CYLINDER_BED_FABRIC_CUTTER_MACHINE',
-    '5_HEAD_HEAT_TRANSFER_PRESS_MACHINE',
-    'AUTO_POCKET_HEM_MACHINE',
-    'AUTO_POCKET_WELT_MACHINE',
-    'AUTO_RIVET_MACHINE',
-    'AUTOMATIC_BELT_LOOP_ATTACH_MACHINE',
-    'AUTOMATIC_FLAT_BOTTOM_HEMMING_MACHINES',
-    'AUTOMATIC_LABEL_ASSEMBLY_MACHINE',
-    'AUTOMATIC_LABEL_FIXING_MACHINE',
-    'AUTOMATIC_POCKET_FACING_STITCHING_MACHINE',
-    'AUTOMATIC_POCKET_SETTER_MACHINE',
-    'AUTOMATIC_STRING_THRUSTING_MACHINE',
-    'BARTACKING_MACHINE',
-    'BLIND_HEM_MACHINE',
-    'BLIND_LOOP_MAKING_MACHINE',
-    'BOTTOM_HEM_MACHINE',
-    'BUTTON_ATTACH_MACHINE',
-    'DOUBLE_NEEDLE_CHAIN_STITCH_MACHINE',
-    'DOUBLE_NEEDLE_LOCK_STITCH_MACHINE',
-    'DOUBLE_NEEDLE_SPLIT_BAR_MACHINE',
-    'EYELET_BUTTONHOLING_MACHINE',
-    'FEED_OF_ARM_MACHINE',
-    'FLATLOCK_CYLINDER_BED_MACHINE',
-    'FLATLOCK_BABY_CYLINDER_BED_MACHINE',
-    'FLATLOCK_CYLINDERBED_ELASTIC_ATTACH_MACHINE',
-    'FLATLOCK_FLATBED_MACHINE',
-    'FLATLOCK_FLATBED_TOP_FEED_MACHINE',
-    'FLATSEAMER_MACHINE',
-    'HANG_TAG_STRING_INSERTION_MACHINE',
-    'HEAT_TRANSFER_PRESS_MACHINE',
-    'INSEAM_IRON',
-    'IRON_TABLE',
-    'MINI_PATTERN_SEAMER_MACHINE',
-    'MULTI_NEEDLE_MACHINE',
-    'NORMAL_BUTTON_HOLE_MACHINE',
-    'OVERLOCK_CUFF_ATTACH_MACHINE',
-    'OVERLOCK_CYLINDER_BED_MACHINE',
-    'OVERLOCK_MACHINE',
-    'OVERLOCK_MACHINE_AND_BACK_LATCH_STITCH',
-    'OVERLOCK_NECK_RIB_ATTACH_MACHINE',
-    'PATTERN_SEWER_MACHINE',
-    'POLO_SHIRT_PLACKET_AUTOMATION_MACHINE',
-    'QUILTING_MACHINE',
-    'SINGLE_NEEDLE_EDGE_CUTTER_MACHINE',
-    'SINGLE_NEEDLE_FEED_MACHINE',
-    'SINGLE_NEEDLE_LOCK_STITCH_MACHINE',
-    'SNAP_ATTACH_MACHINE',
-    'ZIGZAG_STITCH_MACHINE',
-    'Others'
-];
-
-// Personal and contingency allowances (fixed)
-const PERSONAL_ALLOWANCE = 11;
-const CONTINGENCY_ALLOWANCE = 2;
+// CHANGED: General allowance of 16.67% for all machines
+const GENERAL_ALLOWANCE = 16.67;
 
 // DOM Elements
 const elements = {
@@ -200,6 +157,7 @@ const elements = {
     headerLastSync: document.getElementById('headerLastSync'),
     headerTotalOps: document.getElementById('headerTotalOps'),
     headerActiveLines: document.getElementById('headerActiveLines'),
+    headerTimeStudies: document.getElementById('headerTimeStudies'),
     dataVersion: document.getElementById('dataVersion'),
     lastSync: document.getElementById('lastSync'),
     totalOperators: document.getElementById('totalOperators'),
@@ -236,7 +194,7 @@ const elements = {
     groupOperatorCount: document.getElementById('groupOperatorCount'),
     groupAvgEfficiency: document.getElementById('groupAvgEfficiency'),
     groupDescription: document.getElementById('groupDescription'),
-    // Dashboard elements v16
+    // Dashboard elements
     dashboardTotalOperators: document.getElementById('dashboardTotalOperators'),
     dashboardGroupACount: document.getElementById('dashboardGroupACount'),
     dashboardGroupBCount: document.getElementById('dashboardGroupBCount'),
@@ -248,11 +206,8 @@ const elements = {
     dashboardTotalOperations: document.getElementById('dashboardTotalOperations'),
     dashboardActiveLines: document.getElementById('dashboardActiveLines'),
     dashboardMachineUsage: document.getElementById('dashboardMachineUsage'),
-    skillGroupACount: document.getElementById('skillGroupACount'),
-    skillGroupBCount: document.getElementById('skillGroupBCount'),
-    skillGroupCCount: document.getElementById('skillGroupCCount'),
-    skillGroupDCount: document.getElementById('skillGroupDCount'),
-    // Garment SMV elements v16 (smaller cards)
+    dashboardTimeStudiesCount: document.getElementById('dashboardTimeStudiesCount'),
+    // Garment SMV elements
     totalStandardSMV: document.getElementById('totalStandardSMV'),
     totalWorkingSMV: document.getElementById('totalWorkingSMV'),
     standardSMVLineSelect: document.getElementById('standardSMVLineSelect'),
@@ -265,25 +220,37 @@ const elements = {
     studyProductDesc: document.getElementById('studyProductDesc'),
     // Allowance display elements
     allowanceInfo: document.getElementById('allowanceInfo'),
-    personalAllowanceDisplay: document.getElementById('personalAllowanceDisplay'),
-    contingencyAllowanceDisplay: document.getElementById('contingencyAllowanceDisplay'),
-    machineAllowanceDisplay: document.getElementById('machineAllowanceDisplay'),
-    totalAllowanceDisplay: document.getElementById('totalAllowanceDisplay'),
-    // New Edit Existing Details button in operators tab
-    editExistingDetailsBtn: document.getElementById('editExistingDetailsBtn'),
+    generalAllowanceDisplay: document.getElementById('generalAllowanceDisplay'),
     // Mobile menu
     mobileMenuToggle: document.getElementById('mobileMenuToggle'),
     sidebar: document.getElementById('sidebar'),
     sidebarOverlay: document.getElementById('sidebarOverlay'),
-    // Other machines custom input
-    otherMachineCustomInput: document.getElementById('otherMachineCustomInput'),
-    customOtherMachineName: document.getElementById('customOtherMachineName'),
-    perfOtherMachineCustomInput: document.getElementById('perfOtherMachineCustomInput'),
-    perfCustomOtherMachineName: document.getElementById('perfCustomOtherMachineName'),
-    // Combined SMV in dashboard v16
-    dashboardAvgStdSMV: document.getElementById('dashboardAvgStdSMV'),
-    dashboardAvgWorkSMV: document.getElementById('dashboardAvgWorkSMV')
 };
+
+// Initialize application
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadData();
+    setupEventListeners();
+    setupSidebarNavigation();
+    updateRealTimeClock();
+    loadOperatorMachineSkills();
+    loadOperatorAllocatedSkills();
+    
+    // Start real-time clock
+    setInterval(updateRealTimeClock, 1000);
+    
+    // Hide loading overlay
+    setTimeout(() => {
+        elements.loadingOverlay.style.display = 'none';
+    }, 1500);
+    
+    // Check for last added operator highlight
+    if (lastAddedOperatorId) {
+        setTimeout(() => {
+            highlightNewOperator(lastAddedOperatorId);
+        }, 1000);
+    }
+});
 
 // Update real-time clock
 function updateRealTimeClock() {
@@ -305,29 +272,17 @@ function updateRealTimeClock() {
     elements.sidebarLastUpdated.textContent = dateString;
     elements.headerLastSync.textContent = timeString;
     elements.lastSync.textContent = timeString;
-    elements.dataVersion.textContent = '18.0.0';
+    elements.dataVersion.textContent = '17.0.0';
 }
 
-// Setup sidebar navigation - UPDATED for v16
+// Setup sidebar navigation
 function setupSidebarNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     const tabContents = document.querySelectorAll('.tab-content');
     
-    // Filter out Skill Allocation tab if it exists
-    const filteredNavItems = Array.from(navItems).filter(item => {
-        const tabId = item.getAttribute('data-tab');
-        return tabId !== 'skill-allocation';
-    });
-    
-    filteredNavItems.forEach(item => {
+    navItems.forEach(item => {
         item.addEventListener('click', () => {
             const tabId = item.getAttribute('data-tab');
-            
-            // Remove Skill Allocation tab content if it exists
-            const skillAllocationTab = document.getElementById('skill-allocation');
-            if (skillAllocationTab) {
-                skillAllocationTab.remove();
-            }
             
             // Update active nav item
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -357,28 +312,26 @@ function setupSidebarNavigation() {
         });
     });
     
-    // Remove clickable behavior from Total Operators card - V18 CHANGE
+    // Make summary cards clickable
     document.querySelectorAll('.stat-card.clickable').forEach(card => {
-        if (!card.id.includes('TotalOperatorsCard')) {
-            card.addEventListener('click', () => {
-                const tab = card.getAttribute('data-tab');
-                const navItem = document.querySelector(`.nav-item[data-tab="${tab}"]`);
-                if (navItem) {
-                    navItem.click();
-                }
-            });
-        }
+        card.addEventListener('click', () => {
+            const tab = card.getAttribute('data-tab');
+            const navItem = document.querySelector(`.nav-item[data-tab="${tab}"]`);
+            if (navItem) {
+                navItem.click();
+            }
+        });
     });
 }
 
-// Setup mobile menu for v16
+// Setup mobile menu toggle
 function setupMobileMenu() {
-    if (elements.mobileMenuToggle) {
-        elements.mobileMenuToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleMobileSidebar();
-        });
-    }
+    if (!elements.mobileMenuToggle) return;
+    
+    elements.mobileMenuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMobileSidebar();
+    });
     
     if (elements.sidebarOverlay) {
         elements.sidebarOverlay.addEventListener('click', () => {
@@ -417,9 +370,6 @@ function setupMobileMenu() {
                 elements.sidebar.style.width = '240px';
             }
         }
-        
-        // Adjust dashboard layout for mobile
-        adjustDashboardForMobile();
     });
 }
 
@@ -457,46 +407,7 @@ function closeMobileSidebar() {
     }
 }
 
-// Adjust dashboard layout for mobile
-function adjustDashboardForMobile() {
-    const dashboardGrid = document.querySelector('.dashboard-grid-v16');
-    const skillGroupsGrid = document.querySelector('.skill-groups-grid');
-    const garmentSmvContainer = document.querySelector('.garment-smv-container');
-    
-    if (!dashboardGrid || !skillGroupsGrid || !garmentSmvContainer) return;
-    
-    if (window.innerWidth <= 768) {
-        // Stack cards vertically on mobile
-        dashboardGrid.style.gridTemplateColumns = '1fr';
-        garmentSmvContainer.style.gridTemplateColumns = '1fr';
-        
-        // Make skill groups 2 columns on mobile
-        skillGroupsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-        skillGroupsGrid.style.gap = '10px';
-        
-        // Adjust font sizes for mobile
-        document.querySelectorAll('.skill-group-card .count').forEach(el => {
-            el.style.fontSize = '1.8rem';
-        });
-        
-        // Make tables scrollable horizontally
-        document.querySelectorAll('.data-table-wrapper, .performance-table-wrapper').forEach(el => {
-            el.style.overflowX = 'auto';
-        });
-    } else if (window.innerWidth <= 900) {
-        // Tablet layout - V18 CHANGE: Ensure minimum 3 cards per row
-        dashboardGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-        garmentSmvContainer.style.gridTemplateColumns = '1fr';
-        skillGroupsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-    } else {
-        // Desktop layout - V18 CHANGE: Ensure minimum 3 cards per row
-        dashboardGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
-        garmentSmvContainer.style.gridTemplateColumns = '1fr 1fr';
-        skillGroupsGrid.style.gridTemplateColumns = 'repeat(4, 1fr)';
-    }
-}
-
-// Update Garment SMV selectors for v16 (smaller cards) - FIXED for v17
+// Update Garment SMV selectors
 function updateGarmentSMVSelectors() {
     // Get unique lines from performance data
     const lines = new Set();
@@ -514,14 +425,17 @@ function updateGarmentSMVSelectors() {
         }
     });
     
-    // Populate line selectors (excluding removed filters)
+    // Populate line selectors
     const lineSelectors = [
         elements.standardSMVLineSelect,
         elements.workingSMVLineSelect,
         document.getElementById('dashboardLineSelect'),
+        document.getElementById('operatorsLineFilter'),
         document.getElementById('lineFilter'),
-        document.getElementById('perfLineFilter')
-    ].filter(el => el); // Filter out null elements
+        document.getElementById('perfLineFilter'),
+        document.getElementById('dashboardLineFilter'),
+        document.getElementById('timeStudiesLineSelect')
+    ];
     
     lineSelectors.forEach(select => {
         if (select) {
@@ -549,16 +463,16 @@ function updateGarmentSMVSelectors() {
             option.value = line;
             lineNoList.appendChild(option);
         });
+        
+        // Add operators' sew lines to datalist
+        operators.forEach(operator => {
+            if (operator.sewLine && !Array.from(lines).includes(operator.sewLine)) {
+                const option = document.createElement('option');
+                option.value = operator.sewLine;
+                lineNoList.appendChild(option);
+            }
+        });
     }
-    
-    // Add operators' sew lines to datalist
-    operators.forEach(operator => {
-        if (operator.sewLine && !Array.from(lines).includes(operator.sewLine)) {
-            const option = document.createElement('option');
-            option.value = operator.sewLine;
-            if (lineNoList) lineNoList.appendChild(option);
-        }
-    });
     
     // Add event listeners for style dropdown updates
     if (elements.standardSMVLineSelect) {
@@ -601,28 +515,32 @@ function autoFillStyleAndProduct(lineNo, type = 'study') {
         // Always use the latest record (most recent timestamp)
         const latestRecord = lineRecords[0];
         
-        if (type === 'study') {
+        if (type === 'study' && elements.studyStyleNo && elements.studyProductDesc) {
             elements.studyStyleNo.value = latestRecord.styleNo || '';
             elements.studyProductDesc.value = latestRecord.productDesc || '';
         } else {
             const perfStyleNo = document.getElementById('perfStyleNo');
             const perfProductDesc = document.getElementById('perfProductDesc');
-            if (perfStyleNo) perfStyleNo.value = latestRecord.styleNo || '';
-            if (perfProductDesc) perfProductDesc.value = latestRecord.productDesc || '';
+            if (perfStyleNo && perfProductDesc) {
+                perfStyleNo.value = latestRecord.styleNo || '';
+                perfProductDesc.value = latestRecord.productDesc || '';
+            }
         }
         
         // Show toast notification about auto-fill
         showToast(`Auto-filled Style & Description from latest record for Line ${lineNo}`);
     } else {
         // Clear fields if no records found
-        if (type === 'study') {
+        if (type === 'study' && elements.studyStyleNo && elements.studyProductDesc) {
             elements.studyStyleNo.value = '';
             elements.studyProductDesc.value = '';
         } else {
             const perfStyleNo = document.getElementById('perfStyleNo');
             const perfProductDesc = document.getElementById('perfProductDesc');
-            if (perfStyleNo) perfStyleNo.value = '';
-            if (perfProductDesc) perfProductDesc.value = '';
+            if (perfStyleNo && perfProductDesc) {
+                perfStyleNo.value = '';
+                perfProductDesc.value = '';
+            }
         }
     }
 }
@@ -665,16 +583,15 @@ function updateStyleDropdown(line, styleSelect) {
     });
 }
 
-// Calculate Garment SMV for v16 - FIXED for v17
+// Calculate Garment SMV
 function calculateGarmentSMV(type) {
     const lineSelect = type === 'standard' ? elements.standardSMVLineSelect : elements.workingSMVLineSelect;
     const styleSelect = type === 'standard' ? elements.standardSMVStyleSelect : elements.workingSMVStyleSelect;
     const totalElement = type === 'standard' ? elements.totalStandardSMV : elements.totalWorkingSMV;
     
-    if (!lineSelect || !styleSelect || !totalElement) return;
+    if (!lineSelect || !totalElement) return;
     
     const line = lineSelect.value;
-    const style = styleSelect.value;
     
     if (!line) {
         totalElement.textContent = '0.00';
@@ -684,8 +601,8 @@ function calculateGarmentSMV(type) {
     // Filter performance data by line and style
     let filteredData = performanceData.filter(record => record.lineNo === line);
     
-    if (style) {
-        filteredData = filteredData.filter(record => record.styleNo === style);
+    if (styleSelect && styleSelect.value) {
+        filteredData = filteredData.filter(record => record.styleNo === styleSelect.value);
     }
     
     if (filteredData.length === 0) {
@@ -704,16 +621,9 @@ function calculateGarmentSMV(type) {
     });
     
     totalElement.textContent = totalSMV.toFixed(2);
-    
-    // Add description tooltip
-    const description = style 
-        ? `Total ${type === 'standard' ? 'Standard' : 'Working'} SMV for Line ${line}, Style ${style}`
-        : `Total ${type === 'standard' ? 'Standard' : 'Working'} SMV for Line ${line}`;
-    
-    totalElement.title = description;
 }
 
-// Stopwatch functions with machine-specific allowance
+// Stopwatch functions with pause functionality and general allowance
 function formatTime(milliseconds) {
     const totalSeconds = milliseconds / 1000;
     const hours = Math.floor(totalSeconds / 3600);
@@ -724,68 +634,102 @@ function formatTime(milliseconds) {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
 }
 
+function updateStopwatch() {
+    const currentTime = Date.now();
+    stopwatchTotalElapsed = currentTime - stopwatchStartTime;
+    lapElapsed = currentTime - lapStartTime;
+    
+    if (elements.stopwatchDisplay) {
+        elements.stopwatchDisplay.textContent = formatTime(stopwatchTotalElapsed);
+    }
+    if (elements.lapDisplay) {
+        elements.lapDisplay.textContent = `Lap: ${formatTime(lapElapsed)}`;
+    }
+}
+
 function startStopwatch() {
-    if (!stopwatchRunning) {
+    if (!stopwatchRunning && !stopwatchPaused) {
         const now = Date.now();
         stopwatchStartTime = now - stopwatchTotalElapsed;
         lapStartTime = now - lapElapsed;
         
-        stopwatchInterval = setInterval(() => {
-            const currentTime = Date.now();
-            stopwatchTotalElapsed = currentTime - stopwatchStartTime;
-            lapElapsed = currentTime - lapStartTime;
-            
-            elements.stopwatchDisplay.textContent = formatTime(stopwatchTotalElapsed);
-            elements.lapDisplay.textContent = `Lap: ${formatTime(lapElapsed)}`;
-        }, 10);
-        
+        stopwatchInterval = setInterval(updateStopwatch, 10);
         stopwatchRunning = true;
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('stopBtn').disabled = false;
-        document.getElementById('lapBtn').disabled = false;
-        document.getElementById('resetBtn').disabled = true;
-    }
-}
-
-function stopStopwatch() {
-    if (stopwatchRunning) {
-        clearInterval(stopwatchInterval);
-        stopwatchRunning = false;
-        document.getElementById('stopBtn').disabled = true;
-        document.getElementById('lapBtn').disabled = true;
-        document.getElementById('startBtn').disabled = false;
-        document.getElementById('resetBtn').disabled = false;
+        stopwatchPaused = false;
         
-        // Record final lap if we have a lap in progress
-        if (lapElapsed > 0 && lapCounter < cycleCount) {
-            recordLap();
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const lapBtn = document.getElementById('lapBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        
+        if (startBtn) startBtn.disabled = true;
+        if (pauseBtn) {
+            pauseBtn.disabled = false;
+            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+        }
+        if (lapBtn) lapBtn.disabled = false;
+        if (resetBtn) resetBtn.disabled = true;
+    } else if (stopwatchPaused) {
+        // Resume from pause
+        const now = Date.now();
+        stopwatchStartTime = now - stopwatchTotalElapsed;
+        lapStartTime = now - lapElapsed;
+        
+        stopwatchInterval = setInterval(updateStopwatch, 10);
+        stopwatchRunning = true;
+        stopwatchPaused = false;
+        
+        const pauseBtn = document.getElementById('pauseBtn');
+        if (pauseBtn) {
+            pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
         }
     }
 }
 
+function pauseStopwatch() {
+    if (stopwatchRunning && !stopwatchPaused) {
+        clearInterval(stopwatchInterval);
+        stopwatchRunning = false;
+        stopwatchPaused = true;
+        
+        const pauseBtn = document.getElementById('pauseBtn');
+        if (pauseBtn) {
+            pauseBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
+        }
+    } else if (stopwatchPaused) {
+        // Resume
+        startStopwatch();
+    }
+}
+
 function recordLap() {
-    if (lapCounter < cycleCount) {
+    if (lapCounter < cycleCount || cycleCount === 0) {
         lapCounter++;
         const lapTimeSeconds = lapElapsed / 1000;
         lapTimes.push(lapTimeSeconds);
         
-        // Add lap to display
-        const lapItem = document.createElement('div');
-        lapItem.className = 'lap-item';
-        lapItem.innerHTML = `
-            <div class="lap-number">Cycle ${lapCounter}</div>
-            <div class="lap-time">${lapTimeSeconds.toFixed(3)} sec</div>
-        `;
-        elements.lapsList.appendChild(lapItem);
+        // Add lap to display with serial number
+        if (elements.lapsList) {
+            const lapItem = document.createElement('div');
+            lapItem.className = 'lap-item';
+            lapItem.innerHTML = `
+                <div class="lap-number">Cycle ${lapCounter}</div>
+                <div class="lap-time">${lapTimeSeconds.toFixed(3)} sec</div>
+            `;
+            elements.lapsList.appendChild(lapItem);
+        }
         
         // Reset lap timer for next lap
-        lapStartTime = Date.now();
+        const now = Date.now();
+        lapStartTime = now;
         lapElapsed = 0;
-        elements.lapDisplay.textContent = 'Lap: 00:00:00.00';
+        if (elements.lapDisplay) {
+            elements.lapDisplay.textContent = 'Lap: 00:00:00.000';
+        }
         
         // Check if we've reached the maximum cycles
-        if (lapCounter >= cycleCount) {
-            stopStopwatch();
+        if (cycleCount > 0 && lapCounter >= cycleCount) {
+            pauseStopwatch();
             calculateResults();
         }
     }
@@ -794,103 +738,90 @@ function recordLap() {
 function resetStopwatch() {
     clearInterval(stopwatchInterval);
     stopwatchRunning = false;
+    stopwatchPaused = false;
     stopwatchTotalElapsed = 0;
     lapElapsed = 0;
     lapCounter = 0;
     lapTimes = [];
     
-    elements.stopwatchDisplay.textContent = '00:00:00.000';
-    elements.lapDisplay.textContent = 'Lap: 00:00:00.000';
-    elements.lapsList.innerHTML = '';
+    if (elements.stopwatchDisplay) {
+        elements.stopwatchDisplay.textContent = '00:00:00.000';
+    }
+    if (elements.lapDisplay) {
+        elements.lapDisplay.textContent = 'Lap: 00:00:00.000';
+    }
+    if (elements.lapsList) {
+        elements.lapsList.innerHTML = '';
+    }
     
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
-    document.getElementById('lapBtn').disabled = true;
-    document.getElementById('resetBtn').disabled = true;
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const lapBtn = document.getElementById('lapBtn');
+    const resetBtn = document.getElementById('resetBtn');
     
+    if (startBtn) startBtn.disabled = false;
+    if (pauseBtn) {
+        pauseBtn.disabled = true;
+        pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+    }
+    if (lapBtn) lapBtn.disabled = true;
+    if (resetBtn) resetBtn.disabled = true;
+    
+    // Reset results
     document.getElementById('avgCycleTime').textContent = '0.00';
     document.getElementById('totalCycleTime').textContent = '0.00';
     document.getElementById('workingSMVResult').textContent = '0.00';
     document.getElementById('efficiencyResult').textContent = '0%';
 }
 
-// Get machine allowance percentage - UPDATED for v17 with new machine list
-function getMachineAllowance(machineName) {
-    // Handle custom machine names
-    if (machineName === 'Others') {
-        const customMachine = document.getElementById('customMachineName')?.value || 
-                             document.getElementById('perfCustomMachineName')?.value;
-        if (customMachine) {
-            // Check if custom machine name matches any known machine
-            const machineKey = Object.keys(machineAllowances).find(key => 
-                customMachine.toUpperCase().includes(key)
-            );
-            return machineKey ? machineAllowances[machineKey] : machineAllowances['Others'];
-        }
-        return machineAllowances['Others'];
-    }
+// Update allowance display - CHANGED to general allowance
+function updateAllowanceDisplay() {
+    if (!elements.allowanceInfo) return;
     
-    return machineAllowances[machineName] || machineAllowances['Others'];
-}
-
-// Update allowance display
-function updateAllowanceDisplay(machineName) {
-    if (!machineName || !elements.allowanceInfo) {
-        if (elements.allowanceInfo) {
-            elements.allowanceInfo.style.display = 'none';
-        }
-        return;
-    }
-    
-    const machineAllowance = getMachineAllowance(machineName);
-    const totalAllowance = PERSONAL_ALLOWANCE + CONTINGENCY_ALLOWANCE + machineAllowance;
-    
-    // Update display elements
-    elements.personalAllowanceDisplay.textContent = PERSONAL_ALLOWANCE + '%';
-    elements.contingencyAllowanceDisplay.textContent = CONTINGENCY_ALLOWANCE + '%';
-    elements.machineAllowanceDisplay.textContent = machineAllowance + '%';
-    elements.totalAllowanceDisplay.textContent = totalAllowance + '%';
-    
-    // Show the allowance info
     elements.allowanceInfo.style.display = 'block';
+    
+    // Update display elements with general allowance
+    if (elements.generalAllowanceDisplay) {
+        elements.generalAllowanceDisplay.textContent = '16.67%';
+    }
 }
 
-// Calculate results with machine-specific allowance
+// Calculate results with general allowance
 function calculateResults() {
     if (lapTimes.length === 0) return;
     
     const totalTime = lapTimes.reduce((a, b) => a + b, 0);
     const avgTime = totalTime / lapTimes.length;
     
-    // Get machine allowance
-    const machineName = document.getElementById('studyMachine')?.value;
-    const machineAllowance = machineName ? getMachineAllowance(machineName) : 0;
-    const totalAllowance = PERSONAL_ALLOWANCE + CONTINGENCY_ALLOWANCE + machineAllowance;
-    
-    const workingSMV = (avgTime / 60) * (1 + totalAllowance/100);
+    // Use general allowance of 16.67%
+    const workingSMV = (avgTime / 60) * (1 + GENERAL_ALLOWANCE/100);
     const standardSMV = parseFloat(document.getElementById('standardSMV')?.value) || 0;
     const efficiency = standardSMV > 0 ? (standardSMV / workingSMV) * 100 : 0;
     
-    document.getElementById('avgCycleTime').textContent = avgTime.toFixed(2);
-    document.getElementById('totalCycleTime').textContent = totalTime.toFixed(2);
-    document.getElementById('workingSMVResult').textContent = workingSMV.toFixed(2);
-    document.getElementById('efficiencyResult').textContent = efficiency.toFixed(1) + '%';
+    const avgCycleTimeElem = document.getElementById('avgCycleTime');
+    const totalCycleTimeElem = document.getElementById('totalCycleTime');
+    const workingSMVResultElem = document.getElementById('workingSMVResult');
+    const efficiencyResultElem = document.getElementById('efficiencyResult');
     
-    // Color code efficiency
-    const efficiencyElem = document.getElementById('efficiencyResult');
-    if (efficiencyElem) {
-        efficiencyElem.className = 'result-value ';
+    if (avgCycleTimeElem) avgCycleTimeElem.textContent = avgTime.toFixed(2);
+    if (totalCycleTimeElem) totalCycleTimeElem.textContent = totalTime.toFixed(2);
+    if (workingSMVResultElem) workingSMVResultElem.textContent = workingSMV.toFixed(2);
+    if (efficiencyResultElem) {
+        efficiencyResultElem.textContent = efficiency.toFixed(1) + '%';
+        
+        // Color code efficiency
+        efficiencyResultElem.className = 'result-value ';
         if (efficiency >= 85) {
-            efficiencyElem.classList.add('efficiency-high');
+            efficiencyResultElem.classList.add('efficiency-high');
         } else if (efficiency >= 70) {
-            efficiencyElem.classList.add('efficiency-medium');
+            efficiencyResultElem.classList.add('efficiency-medium');
         } else {
-            efficiencyElem.classList.add('efficiency-low');
+            efficiencyResultElem.classList.add('efficiency-low');
         }
     }
 }
 
-// Calculate manual cycle times with machine-specific allowance
+// Calculate manual cycle times with general allowance
 function calculateManualCycles() {
     const manualTimes = [];
     document.querySelectorAll('.manual-cycle-time').forEach(input => {
@@ -908,17 +839,19 @@ function calculateManualCycles() {
     lapTimes = manualTimes;
     lapCounter = manualTimes.length;
     
-    // Update laps display
-    elements.lapsList.innerHTML = '';
-    manualTimes.forEach((time, index) => {
-        const lapItem = document.createElement('div');
-        lapItem.className = 'lap-item';
-        lapItem.innerHTML = `
-            <div class="lap-number">Cycle ${index + 1}</div>
-            <div class="lap-time">${time.toFixed(3)} sec</div>
-        `;
-        elements.lapsList.appendChild(lapItem);
-    });
+    // Update laps display with serial numbers
+    if (elements.lapsList) {
+        elements.lapsList.innerHTML = '';
+        manualTimes.forEach((time, index) => {
+            const lapItem = document.createElement('div');
+            lapItem.className = 'lap-item';
+            lapItem.innerHTML = `
+                <div class="lap-number">Cycle ${index + 1}</div>
+                <div class="lap-time">${time.toFixed(3)} sec</div>
+            `;
+            elements.lapsList.appendChild(lapItem);
+        });
+    }
     
     calculateResults();
     showToast(`Calculated ${manualTimes.length} manual cycle times`);
@@ -945,13 +878,17 @@ async function loadData() {
                 });
             });
             renderOperatorsTable();
+            updateStats();
             updateDashboardStats();
             populateOperatorDropdowns();
             populateLineFilter();
             populateDashboardLineSelect();
+            populateOperatorsLineFilter();
             updateGarmentSMVSelectors();
             updateActiveLinesCount();
-            elements.headerTotalOps.textContent = operators.length;
+            if (elements.headerTotalOps) {
+                elements.headerTotalOps.textContent = operators.length;
+            }
             
             showToast(`${operators.length} operators loaded successfully!`);
         });
@@ -977,17 +914,23 @@ async function loadData() {
                     efficiency: data.efficiency || 0,
                     cycleTimes: data.cycleTimes || [],
                     otherMachines: data.otherMachines || '',
-                    otherMachineEfficiencies: data.otherMachineEfficiencies || '',
-                    allowance: data.allowance || 13,
+                    otherMachineEfficiencies: data.otherMachineEfficiencies || {},
+                    operationGrade: data.operationGrade || '',
+                    criticalToQuality: data.criticalToQuality || '',
+                    bottleneck: data.bottleneck || false,
+                    allowance: GENERAL_ALLOWANCE,
                     timestamp: data.timestamp?.toDate() || new Date(),
                     lastUpdated: data.lastUpdated?.toDate() || new Date()
                 });
             });
             renderPerformanceTable();
-            updateDashboardStats();
+            updatePerformanceStats();
+            updateSummaryStats();
             updateMachineUsageStats();
+            updateDashboardStats();
             updateGarmentSMVSelectors();
             updateActiveLinesCount();
+            updateTimeStudiesCount();
             
             // Update dashboard if active
             if (document.getElementById('dashboard')?.classList.contains('active')) {
@@ -1004,7 +947,7 @@ async function loadData() {
     }
 }
 
-// Update active lines count for v16
+// Update active lines count
 function updateActiveLinesCount() {
     const activeLinesSet = new Set();
     const now = new Date();
@@ -1028,10 +971,37 @@ function updateActiveLinesCount() {
     });
     
     const activeLinesCount = activeLinesSet.size;
-    elements.headerActiveLines.textContent = activeLinesCount;
-    elements.dashboardActiveLines.textContent = activeLinesCount;
+    if (elements.headerActiveLines) {
+        elements.headerActiveLines.textContent = activeLinesCount;
+    }
+    if (elements.dashboardActiveLines) {
+        elements.dashboardActiveLines.textContent = activeLinesCount;
+    }
+    if (elements.activeLines) {
+        elements.activeLines.textContent = activeLinesCount;
+    }
     
     return activeLinesCount;
+}
+
+// Update time studies count
+function updateTimeStudiesCount() {
+    // Count time studies (performance records with cycle times)
+    const timeStudiesCount = performanceData.filter(record => 
+        record.cycleTimes && record.cycleTimes.length > 0
+    ).length;
+    
+    // Update header
+    if (elements.headerTimeStudies) {
+        elements.headerTimeStudies.textContent = timeStudiesCount;
+    }
+    
+    // Update dashboard card
+    if (elements.dashboardTimeStudiesCount) {
+        elements.dashboardTimeStudiesCount.textContent = timeStudiesCount;
+    }
+    
+    return timeStudiesCount;
 }
 
 // Load operator machine skills
@@ -1042,86 +1012,73 @@ function loadOperatorMachineSkills() {
     }
 }
 
+// Load operator allocated skills
+function loadOperatorAllocatedSkills() {
+    const skills = localStorage.getItem('operatorAllocatedSkills');
+    if (skills) {
+        operatorAllocatedSkills = JSON.parse(skills);
+    }
+}
+
 // Save operator machine skills
 function saveOperatorMachineSkills() {
     localStorage.setItem('operatorMachineSkills', JSON.stringify(operatorMachineSkills));
 }
 
-// Update operator machine skill based on performance - V18 CHANGE: Updated logic for machine statistics
+// Save operator allocated skills
+function saveOperatorAllocatedSkills() {
+    localStorage.setItem('operatorAllocatedSkills', JSON.stringify(operatorAllocatedSkills));
+}
+
+// Update operator machine skill based on performance
 function updateOperatorMachineSkill(operatorId, machineName, efficiency) {
     if (!operatorMachineSkills[operatorId]) {
         operatorMachineSkills[operatorId] = {};
     }
     
-    // Create a unique key for machine per style, line, and product combination
-    // Find the current operation details from the form
-    const lineNo = document.getElementById('studyLineNo')?.value || 
-                  document.getElementById('perfLineNo')?.value || '';
-    const styleNo = document.getElementById('studyStyleNo')?.value || 
-                   document.getElementById('perfStyleNo')?.value || '';
-    const productDesc = document.getElementById('studyProductDesc')?.value || 
-                       document.getElementById('perfProductDesc')?.value || '';
-    
-    // Create unique machine key based on style, line, product combination
-    const machineKey = `${machineName}_${lineNo}_${styleNo}_${productDesc}`;
-    
-    if (!operatorMachineSkills[operatorId][machineKey]) {
-        operatorMachineSkills[operatorId][machineKey] = {
-            machineName: machineName,
+    if (!operatorMachineSkills[operatorId][machineName]) {
+        operatorMachineSkills[operatorId][machineName] = {
             operations: new Set(),
             efficiencies: [],
-            lastUpdated: new Date(),
-            context: { lineNo, styleNo, productDesc }
+            lastUpdated: new Date()
         };
     }
     
     // Add operation to set (unique operations)
     const operation = document.getElementById('studyOperation')?.value || 
                     document.getElementById('perfOperation')?.value || 'Unknown';
-    operatorMachineSkills[operatorId][machineKey].operations.add(operation);
+    operatorMachineSkills[operatorId][machineName].operations.add(operation);
     
     // Add efficiency to array
-    operatorMachineSkills[operatorId][machineKey].efficiencies.push(efficiency);
+    operatorMachineSkills[operatorId][machineName].efficiencies.push(efficiency);
     
     // Keep only last 10 efficiencies
-    if (operatorMachineSkills[operatorId][machineKey].efficiencies.length > 10) {
-        operatorMachineSkills[operatorId][machineKey].efficiencies.shift();
+    if (operatorMachineSkills[operatorId][machineName].efficiencies.length > 10) {
+        operatorMachineSkills[operatorId][machineName].efficiencies.shift();
     }
     
-    operatorMachineSkills[operatorId][machineKey].lastUpdated = new Date();
+    operatorMachineSkills[operatorId][machineName].lastUpdated = new Date();
     saveOperatorMachineSkills();
 }
 
 // Calculate skill level for a machine based on performance
 function calculateMachineSkillLevel(operatorId, machineName) {
-    // Find all machine keys for this operator that match the machine name
-    const machineKeys = Object.keys(operatorMachineSkills[operatorId] || {}).filter(key => 
-        key.startsWith(machineName + '_')
-    );
-    
-    if (machineKeys.length === 0) {
-        return 'D';
-    }
-    
-    let totalEfficiency = 0;
-    let totalEfficiencies = 0;
-    let operationCount = 0;
-    
-    // Aggregate data across all contexts for this machine
-    machineKeys.forEach(key => {
-        const data = operatorMachineSkills[operatorId][key];
-        if (data && data.efficiencies.length > 0) {
-            totalEfficiency += data.efficiencies.reduce((a, b) => a + b, 0);
-            totalEfficiencies += data.efficiencies.length;
-            operationCount += data.operations.size;
+    if (!operatorMachineSkills[operatorId] || !operatorMachineSkills[operatorId][machineName]) {
+        // Check allocated skills
+        if (operatorAllocatedSkills[operatorId] && operatorAllocatedSkills[operatorId][machineName]) {
+            const efficiency = operatorAllocatedSkills[operatorId][machineName].efficiency;
+            if (efficiency >= 85) return 'A';
+            else if (efficiency >= 70) return 'B';
+            else if (efficiency >= 50) return 'C';
+            else return 'D';
         }
-    });
-    
-    if (totalEfficiencies === 0) {
         return 'D';
     }
     
-    const avgEfficiency = totalEfficiency / totalEfficiencies;
+    const data = operatorMachineSkills[operatorId][machineName];
+    const avgEfficiency = data.efficiencies.length > 0 ? 
+        data.efficiencies.reduce((a, b) => a + b, 0) / data.efficiencies.length : 0;
+    const operationCount = data.operations.size;
     
     // Determine skill level based on new logic
     if (operationCount >= 3 && avgEfficiency >= 85) {
@@ -1135,45 +1092,32 @@ function calculateMachineSkillLevel(operatorId, machineName) {
     }
 }
 
-// Get all machines for an operator (from performance data) - V18 CHANGE: Updated logic for machine statistics
+// Get all machines for an operator (from performance data and allocated skills)
 function getOperatorMachines(operatorId) {
-    const machines = new Map(); // Use Map to store unique machines by context
+    const machines = new Set();
     
-    // Group by line, style, product combination to count machines correctly
+    // Get machines from performance data
     performanceData.forEach(record => {
         if (record.operatorId === operatorId && record.machineName) {
             let machineName = record.machineName;
             if (record.machineName === 'Others' && record.customMachineName) {
                 machineName = record.customMachineName;
             }
-            
-            // Create a context key
-            const contextKey = `${record.lineNo || ''}_${record.styleNo || ''}_${record.productDesc || ''}`;
-            const machineKey = `${machineName}_${contextKey}`;
-            
-            if (!machines.has(machineKey)) {
-                machines.set(machineKey, {
-                    machineName: machineName,
-                    context: contextKey,
-                    operations: new Set()
-                });
-            }
-            
-            // Add operation to the set
-            if (record.operation) {
-                machines.get(machineKey).operations.add(record.operation);
-            }
+            machines.add(machineName);
         }
     });
     
-    // Convert to array of machine names (unique per context)
-    const uniqueMachines = Array.from(machines.values()).map(item => item.machineName);
+    // Get machines from allocated skills
+    if (operatorAllocatedSkills[operatorId]) {
+        Object.keys(operatorAllocatedSkills[operatorId]).forEach(machine => {
+            machines.add(machine);
+        });
+    }
     
-    // Remove duplicates (same machine name across different contexts)
-    return [...new Set(uniqueMachines)];
+    return Array.from(machines);
 }
 
-// Calculate multi-skill grade based on new logic
+// Calculate multi-skill grade based on new logic with allocated skills - FIXED for v17
 function calculateMultiSkillGrade(operatorId) {
     const machines = getOperatorMachines(operatorId);
     const machineCount = machines.length;
@@ -1195,47 +1139,61 @@ function calculateMultiSkillGrade(operatorId) {
         'D': machineSkillLevels.filter(level => level === 'D').length
     };
     
-    // Apply new multi-skill logic
+    // Get operator's average efficiency
+    const operatorEfficiency = getOperatorAverageEfficiency(operatorId);
+    
+    // Apply v17 grading criteria
+    // Grade A: 3+ machine types, with at least 1 machine at A grade, others at B or C
     if (machineCount >= 3 && levelCounts['A'] >= 1 && 
-        (levelCounts['B'] >= 1 || levelCounts['C'] >= 1)) {
+        (levelCounts['B'] >= 1 || levelCounts['C'] >= 1) &&
+        operatorEfficiency >= 70) {
         return 'Group A';
-    } else if (machineCount >= 2 && levelCounts['B'] >= 1 && 
-              (levelCounts['C'] >= 1 || machineCount === 2)) {
+    }
+    // Grade B: 2+ machine types, with at least 1 machine at B grade, the other at C
+    else if (machineCount >= 2 && levelCounts['B'] >= 1 && 
+             (levelCounts['C'] >= 1 || machineCount === 2) &&
+             operatorEfficiency >= 60) {
         return 'Group B';
-    } else if (machineCount >= 2 && levelCounts['C'] >= 2) {
+    }
+    // Grade C: 2 machine types, both at C grade
+    else if (machineCount >= 2 && levelCounts['C'] >= 2 &&
+             operatorEfficiency >= 50) {
         return 'Group C';
-    } else {
+    }
+    // Grade D: 1 machine type or doesn't meet above criteria
+    else {
         return 'Group D';
     }
 }
 
-// Populate operator dropdowns - UPDATED for v16
+// Populate operator dropdowns
 function populateOperatorDropdowns() {
     const studyOperatorId = document.getElementById('studyOperatorId');
     const perfOperatorId = document.getElementById('perfOperatorId');
+    const editExistingOperatorSelect = document.getElementById('editExistingOperatorSelect');
     
     // Clear existing options except the first one
-    if (studyOperatorId) {
-        studyOperatorId.innerHTML = '<option value="">Select Operator</option>';
-    }
-    if (perfOperatorId) {
-        perfOperatorId.innerHTML = '<option value="">Select Operator</option>';
-    }
+    [studyOperatorId, perfOperatorId, editExistingOperatorSelect].forEach(select => {
+        if (select) {
+            select.innerHTML = '<option value="">Select Operator</option>';
+        }
+    });
     
     operators.forEach(operator => {
-        if (studyOperatorId) {
-            const option1 = document.createElement('option');
-            option1.value = operator.operatorId;
-            option1.textContent = `${operator.operatorId} - ${operator.name}`;
-            studyOperatorId.appendChild(option1);
-        }
+        const option1 = document.createElement('option');
+        option1.value = operator.operatorId;
+        option1.textContent = `${operator.operatorId} - ${operator.name}`;
+        if (studyOperatorId) studyOperatorId.appendChild(option1);
         
-        if (perfOperatorId) {
-            const option2 = document.createElement('option');
-            option2.value = operator.operatorId;
-            option2.textContent = `${operator.operatorId} - ${operator.name}`;
-            perfOperatorId.appendChild(option2);
-        }
+        const option2 = document.createElement('option');
+        option2.value = operator.operatorId;
+        option2.textContent = `${operator.operatorId} - ${operator.name}`;
+        if (perfOperatorId) perfOperatorId.appendChild(option2);
+        
+        const option3 = document.createElement('option');
+        option3.value = operator.operatorId;
+        option3.textContent = `${operator.operatorId} - ${operator.name}`;
+        if (editExistingOperatorSelect) editExistingOperatorSelect.appendChild(option3);
     });
     
     // Update operator selection in time study
@@ -1244,7 +1202,7 @@ function populateOperatorDropdowns() {
             const operatorId = this.value;
             if (operatorId) {
                 const operator = operators.find(op => op.operatorId === operatorId);
-                if (operator && operator.sewLine) {
+                if (operator && operator.sewLine && elements.studyLineNo) {
                     elements.studyLineNo.value = operator.sewLine;
                     // Also trigger auto-fill for the line
                     setTimeout(() => {
@@ -1256,37 +1214,46 @@ function populateOperatorDropdowns() {
     }
 }
 
-// Populate line filter for v16
+// Populate line filter
 function populateLineFilter() {
     const lineFilter = document.getElementById('lineFilter');
     const perfLineFilter = document.getElementById('perfLineFilter');
+    const dashboardLineFilter = document.getElementById('dashboardLineFilter');
+    const timeStudiesLineSelect = document.getElementById('timeStudiesLineSelect');
     
     // Clear and add default option
-    if (lineFilter) {
-        lineFilter.innerHTML = '<option value="">Filter by Sew Line...</option>';
-    }
-    if (perfLineFilter) {
-        perfLineFilter.innerHTML = '<option value="">Filter by Line...</option>';
-    }
+    [lineFilter, perfLineFilter, dashboardLineFilter, timeStudiesLineSelect].forEach(select => {
+        if (select) {
+            select.innerHTML = select.id === 'dashboardLineFilter' || select.id === 'timeStudiesLineSelect' 
+                ? '<option value="">All Lines</option>' 
+                : '<option value="">Filter by Sew Line...</option>';
+        }
+    });
     
     // Collect unique sew lines from supervisor mapping
     const sewLines = Object.keys(supervisorMapping).sort();
     
     // Add options
     sewLines.forEach(line => {
-        if (lineFilter) {
-            const option1 = document.createElement('option');
-            option1.value = line;
-            option1.textContent = line;
-            lineFilter.appendChild(option1);
-        }
+        const option1 = document.createElement('option');
+        option1.value = line;
+        option1.textContent = line;
+        if (lineFilter) lineFilter.appendChild(option1);
         
-        if (perfLineFilter) {
-            const option2 = document.createElement('option');
-            option2.value = line;
-            option2.textContent = line;
-            perfLineFilter.appendChild(option2);
-        }
+        const option2 = document.createElement('option');
+        option2.value = line;
+        option2.textContent = line;
+        if (perfLineFilter) perfLineFilter.appendChild(option2);
+        
+        const option3 = document.createElement('option');
+        option3.value = line;
+        option3.textContent = line;
+        if (dashboardLineFilter) dashboardLineFilter.appendChild(option3);
+        
+        const option4 = document.createElement('option');
+        option4.value = line;
+        option4.textContent = line;
+        if (timeStudiesLineSelect) timeStudiesLineSelect.appendChild(option4);
     });
 }
 
@@ -1311,10 +1278,32 @@ function populateDashboardLineSelect() {
     });
 }
 
-// Update machine usage statistics for dashboard v16
+// Populate operators line filter
+function populateOperatorsLineFilter() {
+    const operatorsLineFilter = document.getElementById('operatorsLineFilter');
+    
+    if (!operatorsLineFilter) return;
+    
+    // Clear existing options
+    operatorsLineFilter.innerHTML = '<option value="">All Lines</option>';
+    
+    // Collect unique lines from supervisor mapping
+    const lines = Object.keys(supervisorMapping).sort();
+    
+    // Add options
+    lines.forEach(line => {
+        const option = document.createElement('option');
+        option.value = line;
+        option.textContent = line;
+        operatorsLineFilter.appendChild(option);
+    });
+}
+
+// Update machine usage statistics - CHANGED: Count unique operators per machine
 function updateMachineUsageStats() {
     const machineUsage = {};
     
+    // Count unique operators per machine
     performanceData.forEach(record => {
         let machineName = record.machineName || 'Unknown';
         if (record.machineName === 'Others' && record.customMachineName) {
@@ -1322,21 +1311,50 @@ function updateMachineUsageStats() {
         }
         
         if (!machineUsage[machineName]) {
-            machineUsage[machineName] = 0;
+            machineUsage[machineName] = new Set();
         }
-        machineUsage[machineName]++;
+        machineUsage[machineName].add(record.operatorId);
+    });
+    
+    // Convert to counts
+    const machineOperatorCounts = {};
+    Object.keys(machineUsage).forEach(machine => {
+        machineOperatorCounts[machine] = machineUsage[machine].size;
     });
     
     // Sort by count descending
-    const sortedMachines = Object.entries(machineUsage)
+    const sortedMachines = Object.entries(machineOperatorCounts)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 5); // Top 5 machines for dashboard
+        .slice(0, 10);
+    
+    // Update performance tab
+    if (elements.machineUsageStats) {
+        if (sortedMachines.length === 0) {
+            elements.machineUsageStats.innerHTML = `
+                <div class="machine-usage-item">
+                    <span class="machine-name">No data available</span>
+                    <span class="machine-count">0</span>
+                </div>
+            `;
+        } else {
+            let machineHTML = '';
+            sortedMachines.forEach(([machine, count]) => {
+                machineHTML += `
+                    <div class="machine-usage-item">
+                        <span class="machine-name">${machine}</span>
+                        <span class="machine-count">${count} operators</span>
+                    </div>
+                `;
+            });
+            elements.machineUsageStats.innerHTML = machineHTML;
+        }
+    }
     
     // Update dashboard machine usage
     updateDashboardMachineUsage(sortedMachines);
 }
 
-// Update dashboard machine usage
+// Update dashboard machine usage - CHANGED: Show unique operators per machine
 function updateDashboardMachineUsage(sortedMachines) {
     if (!elements.dashboardMachineUsage) return;
     
@@ -1351,11 +1369,11 @@ function updateDashboardMachineUsage(sortedMachines) {
     }
     
     let machineHTML = '';
-    sortedMachines.forEach(([machine, count]) => {
+    sortedMachines.slice(0, 5).forEach(([machine, count]) => {
         machineHTML += `
             <div class="machine-usage-item">
                 <span class="machine-name">${machine}</span>
-                <span class="machine-count">${count}</span>
+                <span class="machine-count">${count} operators</span>
             </div>
         `;
     });
@@ -1363,19 +1381,19 @@ function updateDashboardMachineUsage(sortedMachines) {
     elements.dashboardMachineUsage.innerHTML = machineHTML;
 }
 
-// Update dashboard v16 - Updated for new layout without Weekly Trend and Recent Activity
+// Update dashboard
 function updateDashboard() {
     updateDashboardStats();
     createDashboardCharts();
     updateGarmentSMVSelectors();
     updateActiveLinesCount();
-    updateCombinedSMVInDashboard();
+    updateTimeStudiesCount();
 }
 
-// Update dashboard statistics v16 - Updated for new layout
+// Update dashboard statistics
 function updateDashboardStats() {
-    // Total operators
-    const selectedLine = document.getElementById('dashboardLineSelect')?.value;
+    // Total operators with line filter
+    const selectedLine = document.getElementById('dashboardLineSelect')?.value || '';
     let filteredOperators = operators;
     
     if (selectedLine) {
@@ -1386,7 +1404,7 @@ function updateDashboardStats() {
         elements.dashboardTotalOperators.textContent = filteredOperators.length;
     }
     
-    // Calculate groups using new multi-skill logic
+    // Calculate groups using new multi-skill logic with allocated skills
     let groupACount = 0;
     let groupBCount = 0;
     let groupCCount = 0;
@@ -1407,25 +1425,20 @@ function updateDashboardStats() {
     if (elements.dashboardGroupCCount) elements.dashboardGroupCCount.textContent = groupCCount;
     if (elements.dashboardGroupDCount) elements.dashboardGroupDCount.textContent = groupDCount;
     
-    // Update skill distribution card - V18 CHANGE: Combined into one card
-    if (elements.skillGroupACount) elements.skillGroupACount.textContent = groupACount;
-    if (elements.skillGroupBCount) elements.skillGroupBCount.textContent = groupBCount;
-    if (elements.skillGroupCCount) elements.skillGroupCCount.textContent = groupCCount;
-    if (elements.skillGroupDCount) elements.skillGroupDCount.textContent = groupDCount;
-    
     // Performance metrics
     let filteredPerformance = performanceData;
-    const dateRange = document.getElementById('dashboardDateRange')?.value;
+    const dateRange = document.getElementById('dashboardDateRange')?.value || 'week';
     const now = new Date();
     
-    if (dateRange && dateRange !== 'all') {
+    if (dateRange !== 'all') {
         filteredPerformance = filteredPerformance.filter(record => {
             const recordDate = new Date(record.timestamp);
             switch (dateRange) {
                 case 'today':
                     return recordDate.toDateString() === now.toDateString();
                 case 'week':
-                    const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+                    const weekStart = new Date(now);
+                    weekStart.setDate(now.getDate() - now.getDay());
                     return recordDate >= weekStart;
                 case 'month':
                     return recordDate.getMonth() === now.getMonth() &&
@@ -1457,32 +1470,24 @@ function updateDashboardStats() {
     if (elements.dashboardAvgSMV) elements.dashboardAvgSMV.textContent = (totalStdSMV / totalOps).toFixed(2);
     if (elements.dashboardAvgWorkingSMV) elements.dashboardAvgWorkingSMV.textContent = (totalWorkingSMV / totalOps).toFixed(2);
     if (elements.dashboardTotalOperations) elements.dashboardTotalOperations.textContent = totalOps;
-}
-
-// Update Combined SMV in Dashboard v16 - FIXED for v17
-function updateCombinedSMVInDashboard() {
-    const totalStdSMV = performanceData.reduce((sum, record) => sum + (record.standardSMV || 0), 0);
-    const totalWorkingSMV = performanceData.reduce((sum, record) => sum + (record.workingSMV || 0), 0);
-    const avgStdSMV = performanceData.length > 0 ? totalStdSMV / performanceData.length : 0;
-    const avgWorkingSMV = performanceData.length > 0 ? totalWorkingSMV / performanceData.length : 0;
     
-    // Update dashboard combined SMV elements if they exist
-    if (elements.dashboardAvgStdSMV) {
-        elements.dashboardAvgStdSMV.textContent = avgStdSMV.toFixed(2);
-    }
-    if (elements.dashboardAvgWorkSMV) {
-        elements.dashboardAvgWorkSMV.textContent = avgWorkingSMV.toFixed(2);
+    // Update time studies count with line filter
+    const timeStudiesCount = filteredPerformance.filter(record => 
+        record.cycleTimes && record.cycleTimes.length > 0
+    ).length;
+    
+    if (elements.dashboardTimeStudiesCount) {
+        elements.dashboardTimeStudiesCount.textContent = timeStudiesCount;
     }
 }
 
-// Create dashboard charts - UPDATED v18: Combined skill distribution into one card with bar chart
+// Create dashboard charts - UPDATED: Removed skill distribution chart
 function createDashboardCharts() {
     // Destroy existing charts if they exist
     if (efficiencyChart) efficiencyChart.destroy();
     if (linePerformanceChart) linePerformanceChart.destroy();
     if (machinePerformanceChart) machinePerformanceChart.destroy();
-    if (skillDistributionChart) skillDistributionChart.destroy();
-    if (skillGroupsBarChart) skillGroupsBarChart.destroy();
+    if (weeklyTrendChart) weeklyTrendChart.destroy();
     
     // 1. Efficiency Distribution Chart
     const efficiencyCtx = document.getElementById('efficiencyChart')?.getContext('2d');
@@ -1493,7 +1498,7 @@ function createDashboardCharts() {
             'Above 85%': 0
         };
         
-        const selectedLine = document.getElementById('dashboardLineSelect')?.value;
+        const selectedLine = document.getElementById('dashboardLineSelect')?.value || '';
         let filteredPerformance = performanceData;
         
         if (selectedLine) {
@@ -1617,7 +1622,7 @@ function createDashboardCharts() {
         });
     }
     
-    // 3. Machine Performance Chart - Can show >100%
+    // 3. Machine Performance Chart
     const machineCtx = document.getElementById('machinePerformanceChart')?.getContext('2d');
     if (machineCtx) {
         const machinePerformance = {};
@@ -1695,52 +1700,36 @@ function createDashboardCharts() {
         });
     }
     
-    // 4. Skill Groups Bar Chart - V18 CHANGE: Combined skill distribution into bar chart
-    const skillGroupsBarCtx = document.getElementById('skillGroupsBarChart')?.getContext('2d');
-    if (skillGroupsBarCtx) {
-        const skillDistribution = {
-            'Group A': 0,
-            'Group B': 0,
-            'Group C': 0,
-            'Group D': 0
-        };
+    // 4. Weekly Trend Chart
+    const weeklyCtx = document.getElementById('weeklyTrendChart')?.getContext('2d');
+    if (weeklyCtx) {
+        const weeklyData = getWeeklyTrendData();
         
-        operators.forEach(operator => {
-            const multiSkillGrade = calculateMultiSkillGrade(operator.operatorId);
-            skillDistribution[multiSkillGrade]++;
-        });
-        
-        skillGroupsBarChart = new Chart(skillGroupsBarCtx, {
-            type: 'bar',
+        weeklyTrendChart = new Chart(weeklyCtx, {
+            type: 'line',
             data: {
-                labels: Object.keys(skillDistribution),
+                labels: weeklyData.labels,
                 datasets: [{
-                    label: 'Number of Operators',
-                    data: Object.values(skillDistribution),
-                    backgroundColor: [
-                        'rgba(76, 201, 240, 0.8)',
-                        'rgba(67, 97, 238, 0.8)',
-                        'rgba(248, 150, 30, 0.8)',
-                        'rgba(183, 23, 158, 0.8)'
-                    ],
-                    borderColor: [
-                        'rgba(76, 201, 240, 1)',
-                        'rgba(67, 97, 238, 1)',
-                        'rgba(248, 150, 30, 1)',
-                        'rgba(183, 23, 158, 1)'
-                    ],
-                    borderWidth: 1
+                    label: 'Average Efficiency',
+                    data: weeklyData.values,
+                    borderColor: 'rgba(67, 97, 238, 1)',
+                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: 'rgba(67, 97, 238, 1)',
+                    pointBorderColor: '#fff',
+                    pointRadius: 4
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
                 scales: {
                     y: {
-                        beginAtZero: true,
+                        beginAtZero: false,
+                        min: 50,
+                        max: 100,
                         ticks: {
-                            color: 'white',
-                            stepSize: 1
+                            color: 'white'
                         },
                         grid: {
                             color: 'rgba(255, 255, 255, 0.1)'
@@ -1767,7 +1756,44 @@ function createDashboardCharts() {
     }
 }
 
-// Render operators table with new multi-skill logic - UPDATED v16
+// Get weekly trend data
+function getWeeklyTrendData() {
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        last7Days.push(date.toISOString().split('T')[0]);
+    }
+    
+    const dailyAverages = {};
+    last7Days.forEach(day => {
+        dailyAverages[day] = { total: 0, count: 0 };
+    });
+    
+    performanceData.forEach(record => {
+        if (record.timestamp) {
+            const recordDate = record.timestamp.toISOString().split('T')[0];
+            if (dailyAverages[recordDate]) {
+                dailyAverages[recordDate].total += record.efficiency || 0;
+                dailyAverages[recordDate].count++;
+            }
+        }
+    });
+    
+    const labels = last7Days.map(date => {
+        const d = new Date(date);
+        return d.toLocaleDateString('en-US', { weekday: 'short' });
+    });
+    
+    const values = last7Days.map(date => {
+        const data = dailyAverages[date];
+        return data.count > 0 ? (data.total / data.count) : 0;
+    });
+    
+    return { labels, values };
+}
+
+// Render operators table with new multi-skill logic and serial numbers
 function renderOperatorsTable(filteredData = operators) {
     if (!elements.operatorsBody) return;
     
@@ -1776,7 +1802,7 @@ function renderOperatorsTable(filteredData = operators) {
     if (filteredData.length === 0) {
         elements.operatorsBody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 50px;">
+                <td colspan="7" style="text-align: center; padding: 50px;">
                     <i class="fas fa-users" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 15px; display: block;"></i>
                     <h3 style="color: var(--text-secondary); margin-bottom: 10px;">No Operators Found</h3>
                     <p style="color: var(--text-secondary);">Add your first operator to get started</p>
@@ -1787,8 +1813,8 @@ function renderOperatorsTable(filteredData = operators) {
     }
     
     // Show all operators with scroll
-    filteredData.forEach(operator => {
-        // Calculate multi-skill grade using new logic
+    filteredData.forEach((operator, index) => {
+        // Calculate multi-skill grade using new logic with allocated skills
         const multiSkillGrade = calculateMultiSkillGrade(operator.operatorId);
         const skillClass = `skill-group-${multiSkillGrade.charAt(multiSkillGrade.length - 1).toLowerCase()}`;
         
@@ -1803,6 +1829,7 @@ function renderOperatorsTable(filteredData = operators) {
         const row = document.createElement('tr');
         row.className = rowClass;
         row.innerHTML = `
+            <td>${index + 1}</td>
             <td class="operator-id">${operator.operatorId || ''}</td>
             <td>${operator.name || ''}</td>
             <td style="text-align: center;">${operator.sewLine || '-'}</td>
@@ -1828,11 +1855,11 @@ function renderOperatorsTable(filteredData = operators) {
                     <button class="btn-icon view-performance" data-id="${operator.operatorId}" title="View Performance Records">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn-icon edit-existing-details" data-id="${operator.operatorId}" title="Edit Existing Details">
-                        <i class="fas fa-pencil-alt"></i>
-                    </button>
                     <button class="btn-icon btn-icon-timer time-study-operator" data-id="${operator.operatorId}" title="Start Time Study for this Operator">
                         <i class="fas fa-stopwatch"></i>
+                    </button>
+                    <button class="btn-icon edit-existing-details" data-id="${operator.operatorId}" title="Edit Existing Details">
+                        <i class="fas fa-cog"></i>
                     </button>
                 </div>
             </td>
@@ -1862,14 +1889,6 @@ function renderOperatorsTable(filteredData = operators) {
         });
     });
     
-    // NEW: Edit Existing Details button
-    document.querySelectorAll('.edit-existing-details').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const operatorId = e.target.closest('button').getAttribute('data-id');
-            openEditExistingDetailsModal(operatorId);
-        });
-    });
-    
     document.querySelectorAll('.time-study-operator').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const operatorId = e.target.closest('button').getAttribute('data-id');
@@ -1877,476 +1896,38 @@ function renderOperatorsTable(filteredData = operators) {
         });
     });
     
-    // Remove highlight after 5 seconds
+    document.querySelectorAll('.edit-existing-details').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const operatorId = e.target.closest('button').getAttribute('data-id');
+            openEditExistingDetailsModal(operatorId);
+        });
+    });
+    
+    // Remove highlight after 10 seconds
     if (lastAddedOperatorId) {
         setTimeout(() => {
             document.querySelectorAll('.new-operator-highlight').forEach(row => {
                 row.classList.remove('new-operator-highlight');
             });
             lastAddedOperatorId = null;
-        }, 5000);
+        }, 10000);
     }
 }
 
-// NEW: Open Edit Existing Details Modal - COMPLETELY REVAMPED for v17
-function openEditExistingDetailsModal(operatorId) {
-    const operator = operators.find(op => op.operatorId === operatorId);
-    if (!operator) {
-        showToast('Operator not found!', 'error');
-        return;
+// Open Edit Existing Details Modal - UPDATED v17
+function openEditExistingDetailsModal(operatorId = null) {
+    const operator = operatorId ? operators.find(op => op.operatorId === operatorId) : null;
+    
+    // If operatorId is provided, set it in the dropdown
+    if (operator && document.getElementById('editExistingOperatorSelect')) {
+        document.getElementById('editExistingOperatorSelect').value = operatorId;
+        // Trigger change to load records
+        const event = new Event('change');
+        document.getElementById('editExistingOperatorSelect').dispatchEvent(event);
     }
-    
-    // Get all performance records for this operator
-    const operatorRecords = performanceData.filter(record => record.operatorId === operatorId);
-    
-    if (operatorRecords.length === 0) {
-        showToast('No performance records found for this operator', 'error');
-        return;
-    }
-    
-    // Create modal for editing existing details - COMPLETELY REVAMPED UI
-    const modalId = 'editExistingDetailsModal';
-    let modal = document.getElementById(modalId);
-    
-    if (!modal) {
-        // Create modal if it doesn't exist
-        modal = document.createElement('div');
-        modal.id = modalId;
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width: 1000px; max-height: 90vh;">
-                <div class="modal-header">
-                    <h3><i class="fas fa-edit"></i> Edit Performance Details for ${operator.name} (${operatorId})</h3>
-                    <span class="close-modal" data-modal="${modalId}">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <div class="edit-info" style="margin-bottom: 20px; padding: 20px; background: linear-gradient(135deg, rgba(67, 97, 238, 0.1), rgba(76, 201, 240, 0.05)); border-radius: 12px; border-left: 4px solid var(--primary-color);">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                            <div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Total Records</div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">${operatorRecords.length}</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Current Grade</div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--success-color);">${calculateMultiSkillGrade(operatorId)}</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Average Efficiency</div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);">${getOperatorAverageEfficiency(operatorId).toFixed(1)}%</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Sew Line</div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--warning-color);">${operator.sewLine || 'N/A'}</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="performance-table-wrapper" style="max-height: 400px; margin-bottom: 20px;">
-                        <table class="performance-table">
-                            <thead>
-                                <tr>
-                                    <th>Timestamp</th>
-                                    <th>Operation</th>
-                                    <th>Machine</th>
-                                    <th>Other Machines</th>
-                                    <th>Other Machines Efficiency</th>
-                                    <th>Std SMV</th>
-                                    <th>Working SMV</th>
-                                    <th>Efficiency</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="editExistingDetailsBody">
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
-                        <h4 style="margin-bottom: 15px; color: var(--text-primary);"><i class="fas fa-lightbulb"></i> Quick Tips</h4>
-                        <ul style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; padding-left: 20px;">
-                            <li>Click on any cell to edit the value</li>
-                            <li>For Other Machines, use format: "Machine1, Machine2, Machine3"</li>
-                            <li>For Other Machines Efficiency, use format: "Eff1%, Eff2%, Eff3%"</li>
-                            <li>Changes are saved automatically when you click "Save Changes" button</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="modal-footer" style="padding: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center;">
-                    <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                        <i class="fas fa-info-circle" style="color: var(--primary-color); margin-right: 5px;"></i>
-                        Editing ${operatorRecords.length} performance records
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-secondary" id="closeEditExistingModal">
-                            <i class="fas fa-times"></i> Close
-                        </button>
-                        <button class="btn btn-primary" id="saveAllChangesBtn">
-                            <i class="fas fa-save"></i> Save All Changes
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        
-        // Add close event
-        modal.querySelector('.close-modal').addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
-        
-        // Add close button event
-        modal.querySelector('#closeEditExistingModal').addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
-        
-        // Add save all changes button event
-        modal.querySelector('#saveAllChangesBtn').addEventListener('click', async () => {
-            await saveAllEditedRecords(modal, operatorId);
-        });
-    }
-    
-    // Populate table with operator's performance records
-    const tbody = modal.querySelector('#editExistingDetailsBody');
-    tbody.innerHTML = '';
-    
-    operatorRecords.forEach(record => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${record.timestamp ? record.timestamp.toLocaleString() : 'N/A'}</td>
-            <td><input type="text" class="edit-field" data-field="operation" data-id="${record.id}" value="${record.operation || ''}" style="width: 100%; padding: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);"></td>
-            <td>
-                <select class="edit-field" data-field="machineName" data-id="${record.id}" style="width: 100%; padding: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);">
-                    <option value="">Select Machine</option>
-                    ${completeMachineList.map(machine => 
-                        `<option value="${machine}" ${record.machineName === machine ? 'selected' : ''}>${machine.replace(/_/g, ' ')}</option>`
-                    ).join('')}
-                </select>
-            </td>
-            <td><input type="text" class="edit-field" data-field="otherMachines" data-id="${record.id}" value="${record.otherMachines || ''}" placeholder="Machine1, Machine2, Machine3" style="width: 100%; padding: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);"></td>
-            <td><input type="text" class="edit-field" data-field="otherMachineEfficiencies" data-id="${record.id}" value="${record.otherMachineEfficiencies || ''}" placeholder="85%, 70%, 60%" style="width: 100%; padding: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);"></td>
-            <td><input type="number" step="0.01" class="edit-field" data-field="standardSMV" data-id="${record.id}" value="${record.standardSMV || 0}" style="width: 100%; padding: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);"></td>
-            <td><input type="number" step="0.01" class="edit-field" data-field="workingSMV" data-id="${record.id}" value="${record.workingSMV || 0}" style="width: 100%; padding: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);"></td>
-            <td><input type="number" step="0.1" class="edit-field" data-field="efficiency" data-id="${record.id}" value="${record.efficiency || 0}" style="width: 100%; padding: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--text-primary);"></td>
-            <td>
-                <button class="btn-icon save-single-edit" data-id="${record.id}" title="Save This Record" style="background: rgba(76, 201, 240, 0.2); border-color: rgba(76, 201, 240, 0.3); color: var(--success-color);">
-                    <i class="fas fa-save"></i>
-                </button>
-                <button class="btn-icon recalculate-efficiency" data-id="${record.id}" title="Recalculate Efficiency" style="background: rgba(67, 97, 238, 0.2); border-color: rgba(67, 97, 238, 0.3); color: var(--primary-color);">
-                    <i class="fas fa-calculator"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-    
-    // Add event listeners for edit buttons
-    tbody.querySelectorAll('.save-single-edit').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const recordId = e.target.closest('button').getAttribute('data-id');
-            await saveEditedRecord(recordId, modal, operatorId);
-        });
-    });
-    
-    tbody.querySelectorAll('.recalculate-efficiency').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const recordId = e.target.closest('button').getAttribute('data-id');
-            await recalculateEfficiency(recordId, modal);
-        });
-    });
     
     // Show modal
-    modal.classList.add('active');
-}
-
-// NEW: Save edited record - UPDATED for v17 with other machine efficiencies
-async function saveEditedRecord(recordId, modal, operatorId) {
-    try {
-        const record = performanceData.find(r => r.id === recordId);
-        if (!record) {
-            showToast('Record not found!', 'error');
-            return;
-        }
-        
-        // Get all edited fields for this record
-        const row = modal.querySelector(`[data-id="${recordId}"]`).closest('tr');
-        const editedData = {};
-        
-        row.querySelectorAll('.edit-field').forEach(field => {
-            const fieldName = field.getAttribute('data-field');
-            let value = field.value;
-            
-            // Convert numeric fields
-            if (['standardSMV', 'workingSMV', 'efficiency'].includes(fieldName)) {
-                value = parseFloat(value) || 0;
-            }
-            
-            editedData[fieldName] = value;
-        });
-        
-        // Update machine skill if machine name changed
-        if (editedData.machineName && editedData.machineName !== record.machineName) {
-            const efficiency = editedData.efficiency || record.efficiency || 0;
-            updateOperatorMachineSkill(record.operatorId, editedData.machineName, efficiency);
-        }
-        
-        // Update record in Firestore
-        const recordRef = doc(db, 'performance', recordId);
-        await updateDoc(recordRef, {
-            operation: editedData.operation || record.operation,
-            machineName: editedData.machineName || record.machineName,
-            otherMachines: editedData.otherMachines || record.otherMachines,
-            otherMachineEfficiencies: editedData.otherMachineEfficiencies || record.otherMachineEfficiencies,
-            standardSMV: editedData.standardSMV || record.standardSMV,
-            workingSMV: editedData.workingSMV || record.workingSMV,
-            efficiency: editedData.efficiency || record.efficiency,
-            lastUpdated: serverTimestamp()
-        });
-        
-        showToast('Record updated successfully!');
-        
-        // Update operator grade
-        updateOperatorGrade(record.operatorId);
-        
-    } catch (error) {
-        console.error('Error saving edited record:', error);
-        showToast('Error saving record: ' + error.message, 'error');
-    }
-}
-
-// NEW: Save all edited records
-async function saveAllEditedRecords(modal, operatorId) {
-    try {
-        const records = modal.querySelectorAll('#editExistingDetailsBody tr');
-        let saveCount = 0;
-        
-        for (const row of records) {
-            const recordId = row.querySelector('.save-single-edit')?.getAttribute('data-id');
-            if (recordId) {
-                await saveEditedRecord(recordId, modal, operatorId);
-                saveCount++;
-            }
-        }
-        
-        showToast(`Successfully saved ${saveCount} records!`);
-        
-        // Close modal after a delay
-        setTimeout(() => {
-            modal.classList.remove('active');
-        }, 1500);
-        
-    } catch (error) {
-        console.error('Error saving all records:', error);
-        showToast('Error saving records: ' + error.message, 'error');
-    }
-}
-
-// NEW: Recalculate efficiency based on standard and working SMV
-async function recalculateEfficiency(recordId, modal) {
-    try {
-        const record = performanceData.find(r => r.id === recordId);
-        if (!record) {
-            showToast('Record not found!', 'error');
-            return;
-        }
-        
-        const row = modal.querySelector(`[data-id="${recordId}"]`).closest('tr');
-        const standardSMVInput = row.querySelector('[data-field="standardSMV"]');
-        const workingSMVInput = row.querySelector('[data-field="workingSMV"]');
-        const efficiencyInput = row.querySelector('[data-field="efficiency"]');
-        
-        const standardSMV = parseFloat(standardSMVInput.value) || 0;
-        const workingSMV = parseFloat(workingSMVInput.value) || 0;
-        
-        if (standardSMV > 0 && workingSMV > 0) {
-            const efficiency = (standardSMV / workingSMV) * 100;
-            efficiencyInput.value = efficiency.toFixed(1);
-            showToast('Efficiency recalculated!');
-        } else {
-            showToast('Please enter valid SMV values', 'error');
-        }
-    } catch (error) {
-        console.error('Error recalculating efficiency:', error);
-        showToast('Error recalculating efficiency: ' + error.message, 'error');
-    }
-}
-
-// Highlight new operator after adding
-function highlightNewOperator(operatorId) {
-    lastAddedOperatorId = operatorId;
-    
-    // Switch to operators tab
-    const operatorsTab = document.querySelector('.nav-item[data-tab="operators"]');
-    if (operatorsTab) operatorsTab.click();
-    
-    // Scroll to the operator
-    setTimeout(() => {
-        const rows = document.querySelectorAll('#operatorsBody tr');
-        rows.forEach(row => {
-            const operatorIdCell = row.querySelector('.operator-id');
-            if (operatorIdCell && operatorIdCell.textContent === operatorId) {
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                row.classList.add('new-operator-highlight');
-                
-                // Remove highlight after 5 seconds
-                setTimeout(() => {
-                    row.classList.remove('new-operator-highlight');
-                    lastAddedOperatorId = null;
-                }, 5000);
-            }
-        });
-    }, 500);
-}
-
-// Show group operators modal v16
-function showGroupOperators(group, source = 'dashboard') {
-    let filteredOperators = operators.filter(operator => {
-        const multiSkillGrade = calculateMultiSkillGrade(operator.operatorId);
-        return multiSkillGrade === group;
-    });
-    
-    // Apply line filter if selected
-    const lineFilterId = source === 'dashboard' ? 'dashboardLineSelect' : 'operatorsLineFilter';
-    const selectedLine = document.getElementById(lineFilterId)?.value;
-    
-    if (selectedLine) {
-        filteredOperators = filteredOperators.filter(op => op.sewLine === selectedLine);
-    }
-    
-    if (filteredOperators.length === 0) {
-        showToast(`No operators found in ${group}${selectedLine ? ` for line ${selectedLine}` : ''}`, 'error');
-        return;
-    }
-    
-    // Calculate average efficiency for the group
-    let totalEfficiency = 0;
-    let efficiencyCount = 0;
-    
-    filteredOperators.forEach(operator => {
-        const operatorEfficiency = getOperatorAverageEfficiency(operator.operatorId);
-        if (operatorEfficiency > 0) {
-            totalEfficiency += operatorEfficiency;
-            efficiencyCount++;
-        }
-    });
-    
-    const avgEfficiency = efficiencyCount > 0 ? (totalEfficiency / efficiencyCount) : 0;
-    
-    // Update modal title and info
-    elements.groupModalTitle.textContent = `${group} Operators${selectedLine ? ` - Line ${selectedLine}` : ''}`;
-    elements.groupOperatorCount.textContent = filteredOperators.length;
-    elements.groupAvgEfficiency.textContent = avgEfficiency.toFixed(1) + '%';
-    
-    // Set group description
-    let description = '';
-    if (group === 'Group A') {
-        description = 'Grade A: 3+ machine types, with at least 1 machine at A grade, others at B or C';
-    } else if (group === 'Group B') {
-        description = 'Grade B: 2+ machine types, with at least 1 machine at B grade, the other at C';
-    } else if (group === 'Group C') {
-        description = 'Grade C: 2 machine types, both at C grade';
-    } else {
-        description = 'Grade D: Only manual operations, but can handle 1 machine at D grade';
-    }
-    elements.groupDescription.textContent = description;
-    
-    // Render group operators
-    renderGroupOperatorsList(filteredOperators, 'skillScore');
-    
-    // Show modal
-    document.getElementById('groupOperatorsModal').classList.add('active');
-}
-
-// Render group operators list with sorting
-function renderGroupOperatorsList(operatorsList, sortBy = 'skillScore') {
-    if (!elements.groupOperatorsList) return;
-    
-    // Sort operators
-    let sortedOperators = [...operatorsList];
-    
-    switch (sortBy) {
-        case 'skillScore':
-            sortedOperators.sort((a, b) => {
-                const scoreA = calculateSkillScore(a.operatorId);
-                const scoreB = calculateSkillScore(b.operatorId);
-                return scoreB - scoreA;
-            });
-            break;
-        case 'efficiency':
-            sortedOperators.sort((a, b) => {
-                const effA = getOperatorAverageEfficiency(a.operatorId);
-                const effB = getOperatorAverageEfficiency(b.operatorId);
-                return effB - effA;
-            });
-            break;
-        case 'name':
-            sortedOperators.sort((a, b) => a.name.localeCompare(b.name));
-            break;
-        case 'line':
-            sortedOperators.sort((a, b) => (a.sewLine || '').localeCompare(b.sewLine || ''));
-            break;
-    }
-    
-    // Apply search filter
-    const searchInput = document.getElementById('groupSearchInput');
-    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-    if (searchTerm) {
-        sortedOperators = sortedOperators.filter(operator =>
-            (operator.operatorId && operator.operatorId.toLowerCase().includes(searchTerm)) ||
-            (operator.name && operator.name.toLowerCase().includes(searchTerm)) ||
-            (operator.sewLine && operator.sewLine.toLowerCase().includes(searchTerm))
-        );
-    }
-    
-    // Populate operators list
-    elements.groupOperatorsList.innerHTML = '';
-    
-    if (sortedOperators.length === 0) {
-        elements.groupOperatorsList.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: var(--text-secondary);">
-                <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-                <p>No operators found matching your criteria</p>
-            </div>
-        `;
-        return;
-    }
-    
-    sortedOperators.forEach(operator => {
-        const operatorEfficiency = getOperatorAverageEfficiency(operator.operatorId);
-        const efficiencyClass = operatorEfficiency >= 85 ? 'high' :
-                             operatorEfficiency >= 70 ? 'medium' : 'low';
-        const skillScore = calculateSkillScore(operator.operatorId);
-        
-        const operatorItem = document.createElement('div');
-        operatorItem.className = 'group-operator-item';
-        operatorItem.innerHTML = `
-            <div class="group-operator-info">
-                <div class="group-operator-id">${operator.operatorId}</div>
-                <div class="group-operator-name">${operator.name}</div>
-                <div class="group-operator-line">${operator.sewLine || 'No line assigned'}</div>
-            </div>
-            <div class="group-operator-stats">
-                <div class="group-operator-efficiency ${efficiencyClass}">
-                    ${operatorEfficiency.toFixed(1)}%
-                </div>
-                <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                    Score: ${skillScore.toFixed(2)}
-                </div>
-                <button class="btn-icon time-study-operator" data-id="${operator.operatorId}" title="Start Time Study">
-                    <i class="fas fa-stopwatch"></i>
-                </button>
-            </div>
-        `;
-        elements.groupOperatorsList.appendChild(operatorItem);
-    });
-    
-    // Add event listeners for time study buttons
-    document.querySelectorAll('#groupOperatorsList .time-study-operator').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const operatorId = e.target.closest('button').getAttribute('data-id');
-            closeModal('groupOperatorsModal');
-            startTimeStudyForOperator(operatorId);
-        });
-    });
+    document.getElementById('editExistingDetailsModal').classList.add('active');
 }
 
 // Get operator average efficiency
@@ -2367,23 +1948,33 @@ function startTimeStudyForOperator(operatorId) {
     }
     
     // Switch to time study tab
-    const timeStudyTab = document.querySelector('.nav-item[data-tab="time-study"]');
-    if (timeStudyTab) timeStudyTab.click();
+    document.querySelector('.nav-item[data-tab="time-study"]').click();
     
     // Set the operator in the dropdown
     const studyOperatorId = document.getElementById('studyOperatorId');
     if (studyOperatorId) {
         studyOperatorId.value = operatorId;
+        
+        // Trigger change event
+        const event = new Event('change');
+        studyOperatorId.dispatchEvent(event);
     }
     
     // Set the line number if operator has a sew line
-    if (operator.sewLine) {
+    if (operator.sewLine && elements.studyLineNo) {
         elements.studyLineNo.value = operator.sewLine;
+        
+        // Trigger auto-fill
+        setTimeout(() => {
+            autoFillStyleAndProduct(operator.sewLine, 'study');
+        }, 100);
     }
     
     // Focus on operation name field
     const studyOperation = document.getElementById('studyOperation');
-    if (studyOperation) studyOperation.focus();
+    if (studyOperation) {
+        studyOperation.focus();
+    }
     
     showToast(`Time study ready for ${operator.name}. Enter line number and operation details to begin.`, 'success');
 }
@@ -2421,7 +2012,98 @@ function getSkillScoreClass(score) {
     else return 'group-d';
 }
 
-// Render performance table with edit button v16 - UPDATED for v18: Action buttons in sync with UI
+// Update statistics with new multi-skill logic
+function updateStats() {
+    const selectedLine = document.getElementById('operatorsLineFilter')?.value || '';
+    let filteredOperators = operators;
+    
+    if (selectedLine) {
+        filteredOperators = filteredOperators.filter(op => op.sewLine === selectedLine);
+    }
+    
+    const totalOps = filteredOperators.length;
+    
+    // Count operators by group using new multi-skill logic
+    let groupACount = 0;
+    let groupBCount = 0;
+    let groupCCount = 0;
+    let groupDCount = 0;
+    
+    filteredOperators.forEach(operator => {
+        const multiSkillGrade = calculateMultiSkillGrade(operator.operatorId);
+        
+        if (multiSkillGrade === 'Group A') groupACount++;
+        else if (multiSkillGrade === 'Group B') groupBCount++;
+        else if (multiSkillGrade === 'Group C') groupCCount++;
+        else if (multiSkillGrade === 'Group D') groupDCount++;
+    });
+    
+    if (elements.totalOperators) elements.totalOperators.textContent = totalOps;
+    if (elements.groupACount) elements.groupACount.textContent = groupACount;
+    if (elements.groupBCount) elements.groupBCount.textContent = groupBCount;
+    if (elements.groupCCount) elements.groupCCount.textContent = groupCCount;
+    if (elements.groupDCount) elements.groupDCount.textContent = groupDCount;
+}
+
+// Update summary stats
+function updateSummaryStats() {
+    // Performance summary
+    const totalRecords = performanceData.length;
+    const totalEfficiency = performanceData.reduce((sum, record) => sum + (record.efficiency || 0), 0);
+    const avgEfficiency = totalRecords > 0 ? (totalEfficiency / totalRecords) : 0;
+    
+    if (elements.performanceRecords) elements.performanceRecords.textContent = totalRecords;
+    if (elements.performanceAvgEfficiency) elements.performanceAvgEfficiency.textContent = avgEfficiency.toFixed(1) + '%';
+    if (elements.performanceTotalOps) elements.performanceTotalOps.textContent = performanceData.length;
+    
+    // Time study summary (today)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const timeStudiesToday = performanceData.filter(record => {
+        const recordDate = new Date(record.timestamp);
+        return recordDate >= today && record.cycleTimes && record.cycleTimes.length > 0;
+    });
+    
+    let totalCycleTime = 0;
+    let completedStudies = 0;
+    
+    timeStudiesToday.forEach(study => {
+        if (study.cycleTimes && study.cycleTimes.length > 0) {
+            completedStudies++;
+            const avg = study.cycleTimes.reduce((a, b) => a + b, 0) / study.cycleTimes.length;
+            totalCycleTime += avg;
+        }
+    });
+    
+    if (elements.timeStudies) elements.timeStudies.textContent = timeStudiesToday.length;
+    if (elements.timeStudyCompleted) elements.timeStudyCompleted.textContent = completedStudies;
+    if (elements.timeStudyAvgCycle) {
+        elements.timeStudyAvgCycle.textContent = completedStudies > 0 ? (totalCycleTime / completedStudies).toFixed(1) + 's' : '0s';
+    }
+}
+
+// Update performance statistics
+function updatePerformanceStats() {
+    const totalOps = performanceData.length;
+    if (totalOps === 0) {
+        if (elements.avgEfficiency) elements.avgEfficiency.textContent = '0%';
+        if (elements.avgSMV) elements.avgSMV.textContent = '0.00';
+        if (elements.avgWorkingSMV) elements.avgWorkingSMV.textContent = '0.00';
+        if (elements.totalOperations) elements.totalOperations.textContent = '0';
+        return;
+    }
+    
+    const totalEfficiency = performanceData.reduce((sum, record) => sum + (record.efficiency || 0), 0);
+    const totalStdSMV = performanceData.reduce((sum, record) => sum + (record.standardSMV || 0), 0);
+    const totalWorkingSMV = performanceData.reduce((sum, record) => sum + (record.workingSMV || 0), 0);
+    
+    if (elements.avgEfficiency) elements.avgEfficiency.textContent = (totalEfficiency / totalOps).toFixed(1) + '%';
+    if (elements.avgSMV) elements.avgSMV.textContent = (totalStdSMV / totalOps).toFixed(2);
+    if (elements.avgWorkingSMV) elements.avgWorkingSMV.textContent = (totalWorkingSMV / totalOps).toFixed(2);
+    if (elements.totalOperations) elements.totalOperations.textContent = totalOps;
+}
+
+// Render performance table with edit button and serial numbers
 function renderPerformanceTable(filteredData = performanceData) {
     if (!elements.performanceBody) return;
     
@@ -2430,7 +2112,7 @@ function renderPerformanceTable(filteredData = performanceData) {
     if (filteredData.length === 0) {
         elements.performanceBody.innerHTML = `
             <tr>
-                <td colspan="14" style="text-align: center; padding: 50px;">
+                <td colspan="17" style="text-align: center; padding: 50px;">
                     <i class="fas fa-chart-line" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 15px; display: block;"></i>
                     <h3 style="color: var(--text-secondary); margin-bottom: 10px;">No Performance Data Found</h3>
                     <p style="color: var(--text-secondary);">Add your first performance record to get started</p>
@@ -2441,7 +2123,7 @@ function renderPerformanceTable(filteredData = performanceData) {
     }
     
     // Show all performance records with scroll
-    filteredData.forEach(record => {
+    filteredData.forEach((record, index) => {
         const formattedDate = record.timestamp ? record.timestamp.toLocaleString() : 'N/A';
         const efficiency = record.efficiency || 0;
         const efficiencyClass = efficiency >= 85 ? 'efficiency-high' :
@@ -2453,12 +2135,27 @@ function renderPerformanceTable(filteredData = performanceData) {
             machineName = record.customMachineName;
         }
         
-        // Get other machines
-        const otherMachines = record.otherMachines || '-';
-        const otherMachineEfficiencies = record.otherMachineEfficiencies || '-';
+        // Get other machines with efficiencies
+        let otherMachinesDisplay = '-';
+        let otherMachineEfficiencyDisplay = '-';
+        if (record.otherMachines) {
+            const otherMachines = record.otherMachines.split(', ');
+            const efficiencies = record.otherMachineEfficiencies || {};
+            otherMachinesDisplay = otherMachines.join(', ');
+            otherMachineEfficiencyDisplay = otherMachines.map(machine => {
+                const efficiency = efficiencies[machine] || 0;
+                return `${efficiency.toFixed(1)}%`;
+            }).join(', ');
+        }
+        
+        // Format CTQ/Bottleneck
+        const ctqDisplay = record.criticalToQuality === 'critical' ? 'Critical' : 
+                          record.criticalToQuality === 'not-critical' ? 'Not Critical' : '-';
+        const bottleneckDisplay = record.bottleneck ? 'Yes' : 'No';
         
         const row = document.createElement('tr');
         row.innerHTML = `
+            <td>${index + 1}</td>
             <td>${formattedDate}</td>
             <td>${record.lineNo || '-'}</td>
             <td>${record.styleNo || '-'}</td>
@@ -2467,7 +2164,7 @@ function renderPerformanceTable(filteredData = performanceData) {
             <td>${record.operatorName || '-'}</td>
             <td>${record.operation || '-'}</td>
             <td>${machineName}</td>
-            <td>${otherMachines}</td>
+            <td>${otherMachinesDisplay}</td>
             <td>${record.standardSMV ? record.standardSMV.toFixed(2) : '-'}</td>
             <td class="working-smv-cell">
                 <button class="working-smv-btn" data-id="${record.id}">
@@ -2475,14 +2172,16 @@ function renderPerformanceTable(filteredData = performanceData) {
                 </button>
             </td>
             <td class="${efficiencyClass}">${efficiency ? efficiency.toFixed(1) + '%' : '-'}</td>
-            <td>${otherMachineEfficiencies}</td>
+            <td>${otherMachineEfficiencyDisplay}</td>
+            <td>${record.operationGrade || '-'}</td>
+            <td>${ctqDisplay}${record.bottleneck ? ' (Bottleneck)' : ''}</td>
             <td>
                 <div class="action-buttons-small">
-                    <button class="btn-icon edit-perf-btn" data-id="${record.id}" title="Edit Record">
-                        <i class="fas fa-edit"></i>
-                    </button>
                     <button class="btn-icon delete-perf-btn" data-id="${record.id}" title="Delete Record">
                         <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="btn-icon edit-perf-btn" data-id="${record.id}" title="Edit Record">
+                        <i class="fas fa-edit"></i>
                     </button>
                 </div>
             </td>
@@ -2498,14 +2197,6 @@ function renderPerformanceTable(filteredData = performanceData) {
         });
     });
     
-    // Add event listeners for action buttons - V18 CHANGE: Consistent with operators table
-    document.querySelectorAll('.edit-perf-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const recordId = e.target.closest('button').getAttribute('data-id');
-            openEditPerformanceModal(recordId);
-        });
-    });
-    
     document.querySelectorAll('.delete-perf-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const id = e.target.closest('button').getAttribute('data-id');
@@ -2514,24 +2205,26 @@ function renderPerformanceTable(filteredData = performanceData) {
             }
         });
     });
+    
+    document.querySelectorAll('.edit-perf-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const recordId = e.target.closest('button').getAttribute('data-id');
+            openEditPerformanceModal(recordId);
+        });
+    });
 }
 
-// Open edit performance modal
+// Open edit performance modal - UPDATED v17
 function openEditPerformanceModal(recordId) {
     const record = performanceData.find(r => r.id === recordId);
     if (!record) return;
     
-    const editRecordId = document.getElementById('editRecordId');
-    const editRecordOperator = document.getElementById('editRecordOperator');
-    const editRecordStdSMV = document.getElementById('editRecordStdSMV');
-    const editRecordWorkingSMV = document.getElementById('editRecordWorkingSMV');
-    const editRecordCycleTimes = document.getElementById('editRecordCycleTimes');
-    
-    if (editRecordId) editRecordId.textContent = recordId;
-    if (editRecordOperator) editRecordOperator.textContent = `${record.operatorName} (${record.operatorId})`;
-    if (editRecordStdSMV) editRecordStdSMV.value = record.standardSMV || 0;
-    if (editRecordWorkingSMV) editRecordWorkingSMV.value = record.workingSMV || 0;
-    if (editRecordCycleTimes) editRecordCycleTimes.value = record.cycleTimes ? record.cycleTimes.join(', ') : '';
+    document.getElementById('editRecordId').textContent = recordId;
+    document.getElementById('editRecordOperator').textContent = `${record.operatorName} (${record.operatorId})`;
+    document.getElementById('editRecordStdSMV').value = record.standardSMV || 0;
+    document.getElementById('editRecordWorkingSMV').value = record.workingSMV || 0;
+    document.getElementById('editRecordOperationGrade').value = record.operationGrade || '';
+    document.getElementById('editRecordCycleTimes').value = record.cycleTimes ? record.cycleTimes.join(', ') : '';
     
     document.getElementById('editPerformanceModal').classList.add('active');
 }
@@ -2545,25 +2238,21 @@ function openEditModal(operatorId) {
     }
     
     selectedOperatorId = operatorId;
-    const editOperatorId = document.getElementById('editOperatorId');
-    const editOperatorName = document.getElementById('editOperatorName');
-    const editSewLine = document.getElementById('editSewLine');
-    const editSkillLevel = document.getElementById('editSkillLevel');
-    const editSkillScore = document.getElementById('editSkillScore');
-    const scoreSlider = document.getElementById('scoreSlider');
+    document.getElementById('editOperatorId').textContent = operatorId;
+    document.getElementById('editOperatorName').textContent = operator.name || '';
+    document.getElementById('editSewLine').value = operator.sewLine || '';
     
-    if (editOperatorId) editOperatorId.textContent = operatorId;
-    if (editOperatorName) editOperatorName.textContent = operator.name || '';
-    if (editSewLine) editSewLine.value = operator.sewLine || '';
-    
-    // Calculate multi-skill grade
+    // Calculate multi-skill grade with allocated skills
     const multiSkillGrade = calculateMultiSkillGrade(operatorId);
-    if (editSkillLevel) editSkillLevel.value = multiSkillGrade;
+    document.getElementById('editSkillLevel').value = multiSkillGrade;
     
     // Calculate and set skill score
     const skillScore = calculateSkillScore(operatorId);
-    if (editSkillScore) editSkillScore.value = skillScore.toFixed(2);
-    if (scoreSlider) scoreSlider.value = Math.round(skillScore * 100);
+    document.getElementById('editSkillScore').value = skillScore.toFixed(2);
+    const scoreSlider = document.getElementById('scoreSlider');
+    if (scoreSlider) {
+        scoreSlider.value = Math.round(skillScore * 100);
+    }
     
     document.getElementById('editCellModal').classList.add('active');
 }
@@ -2584,8 +2273,7 @@ function viewOperatorPerformance(operatorId) {
     }
     
     // Switch to performance tab
-    const performanceTab = document.querySelector('.nav-item[data-tab="performance"]');
-    if (performanceTab) performanceTab.click();
+    document.querySelector('.nav-item[data-tab="performance"]').click();
     
     // Filter by operator
     const searchPerformance = document.getElementById('searchPerformance');
@@ -2597,9 +2285,9 @@ function viewOperatorPerformance(operatorId) {
     // Highlight the records
     setTimeout(() => {
         const rows = document.querySelectorAll('#performanceBody tr');
-        rows.forEach((row, index) => {
+        rows.forEach((row) => {
             const cells = row.querySelectorAll('td');
-            if (cells.length > 4 && cells[4].textContent === operatorId) {
+            if (cells.length > 6 && cells[5].textContent === operatorId) {
                 row.classList.add('highlight-row');
                 
                 // Remove highlight after 3 seconds
@@ -2613,12 +2301,11 @@ function viewOperatorPerformance(operatorId) {
     }, 500);
 }
 
-// Filter operators v16
+// Filter operators
 function filterOperators() {
     let filtered = operators;
-    const searchTerm = elements.searchInput ? elements.searchInput.value.toLowerCase() : '';
-    const skillLevel = elements.skillFilter ? elements.skillFilter.value : '';
-    const sewLine = elements.lineFilter ? elements.lineFilter.value : '';
+    const searchTerm = elements.searchInput?.value.toLowerCase() || '';
+    const selectedLine = document.getElementById('operatorsLineFilter')?.value || '';
     
     if (searchTerm) {
         filtered = filtered.filter(operator =>
@@ -2628,6 +2315,7 @@ function filterOperators() {
         );
     }
     
+    const skillLevel = elements.skillFilter?.value || '';
     if (skillLevel) {
         filtered = filtered.filter(operator => {
             const multiSkillGrade = calculateMultiSkillGrade(operator.operatorId);
@@ -2635,16 +2323,21 @@ function filterOperators() {
         });
     }
     
+    const sewLine = elements.lineFilter?.value || '';
     if (sewLine) {
         filtered = filtered.filter(operator =>
             operator.sewLine && operator.sewLine.toLowerCase().includes(sewLine.toLowerCase())
         );
     }
     
+    if (selectedLine) {
+        filtered = filtered.filter(operator => operator.sewLine === selectedLine);
+    }
+    
     renderOperatorsTable(filtered);
 }
 
-// Filter performance data v16
+// Filter performance data
 function filterPerformanceData() {
     const searchTerm = document.getElementById('searchPerformance')?.value.toLowerCase() || '';
     const lineFilter = document.getElementById('perfLineFilter')?.value || '';
@@ -2673,7 +2366,8 @@ function filterPerformanceData() {
                 case 'today':
                     return recordDate.toDateString() === now.toDateString();
                 case 'week':
-                    const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+                    const weekStart = new Date(now);
+                    weekStart.setDate(now.getDate() - now.getDay());
                     return recordDate >= weekStart;
                 case 'month':
                     return recordDate.getMonth() === now.getMonth() &&
@@ -2744,13 +2438,6 @@ async function saveOperator(operatorData, isEdit = false) {
     }
 }
 
-// Update operator grade in operators table
-function updateOperatorGrade(operatorId) {
-    // This will be reflected when the operators table is re-rendered
-    renderOperatorsTable();
-    updateDashboardStats();
-}
-
 // Delete operator
 async function deleteOperator(operatorId) {
     if (!confirm(`Are you sure you want to delete operator ${operatorId}?`)) {
@@ -2777,23 +2464,31 @@ function resetTimeStudyForm() {
     // Let them be auto-filled when user enters line number
     
     const studyOperatorId = document.getElementById('studyOperatorId');
-    const studyOperation = document.getElementById('studyOperation');
-    const studyMachine = document.getElementById('studyMachine');
-    const customMachineName = document.getElementById('customMachineName');
-    const customMachineRow = document.getElementById('customMachineRow');
-    const standardSMV = document.getElementById('standardSMV');
-    
     if (studyOperatorId) studyOperatorId.value = '';
     // Keep line number field for auto-fill
+    const studyOperation = document.getElementById('studyOperation');
     if (studyOperation) studyOperation.value = '';
+    const studyMachine = document.getElementById('studyMachine');
     if (studyMachine) studyMachine.value = '';
+    const customMachineName = document.getElementById('customMachineName');
     if (customMachineName) customMachineName.value = '';
+    const customMachineRow = document.getElementById('customMachineRow');
     if (customMachineRow) customMachineRow.style.display = 'none';
+    const standardSMV = document.getElementById('standardSMV');
     if (standardSMV) standardSMV.value = '';
+    const operationGrade = document.getElementById('operationGrade');
+    if (operationGrade) operationGrade.value = '';
     
-    // Clear other machines
-    const selectedOtherMachines = document.getElementById('selectedOtherMachines');
-    if (selectedOtherMachines) selectedOtherMachines.innerHTML = '';
+    // Reset CTQ radio buttons
+    const ctqRadios = document.querySelectorAll('input[name="ctq"]');
+    ctqRadios.forEach(radio => radio.checked = false);
+    
+    // Reset bottleneck checkbox
+    const bottleneckCheckbox = document.getElementById('bottleneckCheckbox');
+    if (bottleneckCheckbox) {
+        bottleneckCheckbox.checked = false;
+        bottleneckCheckbox.parentElement.style.display = 'none';
+    }
     
     // Reset stopwatch
     resetStopwatch();
@@ -2801,7 +2496,6 @@ function resetTimeStudyForm() {
     // Reset manual inputs
     const manualCycleInputs = document.getElementById('manualCycleInputs');
     if (manualCycleInputs) manualCycleInputs.style.display = 'none';
-    
     document.querySelectorAll('.manual-cycle-time').forEach(input => {
         input.value = '';
     });
@@ -2823,10 +2517,10 @@ function showToast(message, type = 'success') {
     toast.className = 'toast';
     if (type === 'error') {
         toast.classList.add('toast-error');
-        icon.className = 'fas fa-exclamation-circle';
+        if (icon) icon.className = 'fas fa-exclamation-circle';
     } else {
         toast.classList.add('toast-success');
-        icon.className = 'fas fa-check-circle';
+        if (icon) icon.className = 'fas fa-check-circle';
     }
     
     toast.classList.add('show');
@@ -2895,60 +2589,59 @@ function showCycleTimesDetail(recordId) {
     document.getElementById('cycleDetailModal').classList.add('active');
 }
 
-// Setup multi-select for other machines - UPDATED for v17 with all machines
+// Setup multi-select for other machines
 function setupMultiSelect() {
-    // Setup for time study
-    const otherMachinesOptions = document.getElementById('otherMachinesOptions');
+    const timeStudyOtherMachinesOptions = document.getElementById('otherMachinesOptions');
     const perfOtherMachinesOptions = document.getElementById('perfOtherMachinesOptions');
-    const editPerfOtherMachinesOptions = document.getElementById('editPerfOtherMachinesOptions');
     
     // Clear existing options
-    if (otherMachinesOptions) otherMachinesOptions.innerHTML = '';
+    if (timeStudyOtherMachinesOptions) timeStudyOtherMachinesOptions.innerHTML = '';
     if (perfOtherMachinesOptions) perfOtherMachinesOptions.innerHTML = '';
-    if (editPerfOtherMachinesOptions) editPerfOtherMachinesOptions.innerHTML = '';
     
-    // Add all machines from the complete list
-    completeMachineList.forEach(machine => {
-        const displayName = machine.replace(/_/g, ' ');
-        
-        // Time study
-        if (otherMachinesOptions) {
-            const option1 = document.createElement('div');
-            option1.className = 'multi-select-option';
-            option1.innerHTML = `
-                <input type="checkbox" value="${machine}">
-                <span>${displayName}</span>
-            `;
-            otherMachinesOptions.appendChild(option1);
+    // Add grouped options
+    Object.entries(machineFamilies).forEach(([family, machines]) => {
+        // Time study options
+        if (timeStudyOtherMachinesOptions) {
+            const groupDiv1 = document.createElement('div');
+            groupDiv1.className = 'multi-select-option-group';
+            groupDiv1.innerHTML = `<div class="option-group-label">${family}</div>`;
+            
+            machines.forEach(machine => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'multi-select-option';
+                optionDiv.innerHTML = `
+                    <input type="checkbox" value="${machine}">
+                    <span>${machine}</span>
+                `;
+                groupDiv1.appendChild(optionDiv);
+            });
+            
+            timeStudyOtherMachinesOptions.appendChild(groupDiv1);
         }
         
-        // Performance modal
+        // Performance modal options
         if (perfOtherMachinesOptions) {
-            const option2 = document.createElement('div');
-            option2.className = 'multi-select-option';
-            option2.innerHTML = `
-                <input type="checkbox" value="${machine}">
-                <span>${displayName}</span>
-            `;
-            perfOtherMachinesOptions.appendChild(option2);
-        }
-        
-        // Edit performance modal
-        if (editPerfOtherMachinesOptions) {
-            const option3 = document.createElement('div');
-            option3.className = 'multi-select-option';
-            option3.innerHTML = `
-                <input type="checkbox" value="${machine}">
-                <span>${displayName}</span>
-            `;
-            editPerfOtherMachinesOptions.appendChild(option3);
+            const groupDiv2 = document.createElement('div');
+            groupDiv2.className = 'multi-select-option-group';
+            groupDiv2.innerHTML = `<div class="option-group-label">${family}</div>`;
+            
+            machines.forEach(machine => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'multi-select-option';
+                optionDiv.innerHTML = `
+                    <input type="checkbox" value="${machine}">
+                    <span>${machine}</span>
+                `;
+                groupDiv2.appendChild(optionDiv);
+            });
+            
+            perfOtherMachinesOptions.appendChild(groupDiv2);
         }
     });
     
-    // Add event listeners for multi-select
+    // Setup event listeners for multi-select
     setupMultiSelectEvents('otherMachinesSelect', 'otherMachinesOptions', 'selectedOtherMachines');
     setupMultiSelectEvents('perfOtherMachinesSelect', 'perfOtherMachinesOptions', 'perfSelectedOtherMachines');
-    setupMultiSelectEvents('editPerfOtherMachinesSelect', 'editPerfOtherMachinesOptions', 'editPerfSelectedOtherMachines');
 }
 
 function setupMultiSelectEvents(selectId, optionsId, selectedId) {
@@ -2983,7 +2676,7 @@ function setupMultiSelectEvents(selectId, optionsId, selectedId) {
                 const tag = document.createElement('div');
                 tag.className = 'selected-tag';
                 tag.innerHTML = `
-                    ${value.replace(/_/g, ' ')}
+                    ${value}
                     <i class="fas fa-times" data-value="${value}"></i>
                 `;
                 selected.appendChild(tag);
@@ -3018,6 +2711,183 @@ function closeModal(modalId) {
     }
 }
 
+// Highlight new operator after adding
+function highlightNewOperator(operatorId) {
+    lastAddedOperatorId = operatorId;
+    
+    // Switch to operators tab
+    const operatorsNav = document.querySelector('.nav-item[data-tab="operators"]');
+    if (operatorsNav) {
+        operatorsNav.click();
+    }
+    
+    // Sort operators by ID for refresh
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            // Reset sorting
+            lastAddedOperatorId = null;
+            renderOperatorsTable(operators);
+        });
+    }
+}
+
+// Show group operators modal
+function showGroupOperators(group, source = 'dashboard') {
+    let filteredOperators = operators.filter(operator => {
+        const multiSkillGrade = calculateMultiSkillGrade(operator.operatorId);
+        return multiSkillGrade === group;
+    });
+    
+    // Apply line filter if selected
+    const lineFilterId = source === 'dashboard' ? 'dashboardLineSelect' : 'operatorsLineFilter';
+    const selectedLine = document.getElementById(lineFilterId)?.value || '';
+    
+    if (selectedLine) {
+        filteredOperators = filteredOperators.filter(op => op.sewLine === selectedLine);
+    }
+    
+    if (filteredOperators.length === 0) {
+        showToast(`No operators found in ${group}${selectedLine ? ` for line ${selectedLine}` : ''}`, 'error');
+        return;
+    }
+    
+    // Calculate average efficiency for the group
+    let totalEfficiency = 0;
+    let efficiencyCount = 0;
+    
+    filteredOperators.forEach(operator => {
+        const operatorEfficiency = getOperatorAverageEfficiency(operator.operatorId);
+        if (operatorEfficiency > 0) {
+            totalEfficiency += operatorEfficiency;
+            efficiencyCount++;
+        }
+    });
+    
+    const avgEfficiency = efficiencyCount > 0 ? (totalEfficiency / efficiencyCount) : 0;
+    
+    // Update modal title and info
+    if (elements.groupModalTitle) {
+        elements.groupModalTitle.textContent = `${group} Operators${selectedLine ? ` - Line ${selectedLine}` : ''}`;
+    }
+    if (elements.groupOperatorCount) {
+        elements.groupOperatorCount.textContent = filteredOperators.length;
+    }
+    if (elements.groupAvgEfficiency) {
+        elements.groupAvgEfficiency.textContent = avgEfficiency.toFixed(1) + '%';
+    }
+    
+    // Set group description
+    let description = '';
+    if (group === 'Group A') {
+        description = 'Grade A: 3+ machine types, with at least 1 machine at A grade, others at B or C';
+    } else if (group === 'Group B') {
+        description = 'Grade B: 2+ machine types, with at least 1 machine at B grade, the other at C';
+    } else if (group === 'Group C') {
+        description = 'Grade C: 2 machine types, both at C grade';
+    } else {
+        description = 'Grade D: Only manual operations, but can handle 1 machine at D grade';
+    }
+    if (elements.groupDescription) {
+        elements.groupDescription.textContent = description;
+    }
+    
+    // Render group operators with serial numbers
+    renderGroupOperatorsList(filteredOperators, 'skillScore');
+    
+    // Show modal
+    document.getElementById('groupOperatorsModal').classList.add('active');
+}
+
+// Render group operators list with sorting and serial numbers
+function renderGroupOperatorsList(operatorsList, sortBy = 'skillScore') {
+    if (!elements.groupOperatorsList) return;
+    
+    // Sort operators
+    let sortedOperators = [...operatorsList];
+    
+    switch (sortBy) {
+        case 'skillScore':
+            sortedOperators.sort((a, b) => {
+                const scoreA = calculateSkillScore(a.operatorId);
+                const scoreB = calculateSkillScore(b.operatorId);
+                return scoreB - scoreA;
+            });
+            break;
+        case 'efficiency':
+            sortedOperators.sort((a, b) => {
+                const effA = getOperatorAverageEfficiency(a.operatorId);
+                const effB = getOperatorAverageEfficiency(b.operatorId);
+                return effB - effA;
+            });
+            break;
+        case 'name':
+            sortedOperators.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+        case 'line':
+            sortedOperators.sort((a, b) => (a.sewLine || '').localeCompare(b.sewLine || ''));
+            break;
+    }
+    
+    // Apply search filter
+    const searchTerm = document.getElementById('groupSearchInput')?.value.toLowerCase() || '';
+    if (searchTerm) {
+        sortedOperators = sortedOperators.filter(operator =>
+            (operator.operatorId && operator.operatorId.toLowerCase().includes(searchTerm)) ||
+            (operator.name && operator.name.toLowerCase().includes(searchTerm)) ||
+            (operator.sewLine && operator.sewLine.toLowerCase().includes(searchTerm))
+        );
+    }
+    
+    // Populate operators list with serial numbers
+    elements.groupOperatorsList.innerHTML = '';
+    
+    if (sortedOperators.length === 0) {
+        elements.groupOperatorsList.innerHTML = `
+            <div style="text-align: center; padding: 30px; color: var(--text-secondary);">
+                <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                <p>No operators found matching your criteria</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Create table
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>S.No.</th>
+                <th>Operator ID</th>
+                <th>Name</th>
+                <th>Line</th>
+                <th>Skill Score</th>
+            </tr>
+        </thead>
+        <tbody id="groupOperatorsTableBody">
+        </tbody>
+    `;
+    elements.groupOperatorsList.appendChild(table);
+    
+    const tableBody = document.getElementById('groupOperatorsTableBody');
+    if (!tableBody) return;
+    
+    sortedOperators.forEach((operator, index) => {
+        const skillScore = calculateSkillScore(operator.operatorId);
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${operator.operatorId}</td>
+            <td>${operator.name}</td>
+            <td>${operator.sewLine || 'No line'}</td>
+            <td>${skillScore.toFixed(2)}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
 // Setup manual cycle inputs
 function setupManualCycleInputs(count) {
     const manualCycleGrid = document.getElementById('manualCycleGrid');
@@ -3036,7 +2906,7 @@ function setupManualCycleInputs(count) {
     }
 }
 
-// Save performance data from time study WITH MACHINE-SPECIFIC ALLOWANCE
+// Save performance data from time study WITH GENERAL ALLOWANCE and v17 features
 async function saveTimeStudyData() {
     try {
         const operatorId = document.getElementById('studyOperatorId')?.value;
@@ -3053,13 +2923,9 @@ async function saveTimeStudyData() {
         
         const avgTime = lapTimes.reduce((a, b) => a + b, 0) / lapTimes.length;
         
-        // Get machine allowance
-        const machineName = document.getElementById('studyMachine')?.value;
-        const machineAllowance = machineName ? getMachineAllowance(machineName) : 0;
-        const totalAllowance = PERSONAL_ALLOWANCE + CONTINGENCY_ALLOWANCE + machineAllowance;
-        
-        const workingSMV = (avgTime / 60) * (1 + totalAllowance/100);
-        const standardSMV = parseFloat(document.getElementById('standardSMV')?.value);
+        // Use general allowance of 16.67%
+        const workingSMV = (avgTime / 60) * (1 + GENERAL_ALLOWANCE/100);
+        const standardSMV = parseFloat(document.getElementById('standardSMV')?.value) || 0;
         
         if (!standardSMV || standardSMV <= 0) {
             showToast('Please enter a valid Standard SMV', 'error');
@@ -3068,9 +2934,18 @@ async function saveTimeStudyData() {
         
         const efficiency = (standardSMV / workingSMV) * 100;
         
+        // Get operation complexity grade
+        const operationGrade = document.getElementById('operationGrade')?.value || '';
+        
+        // Get CTQ and Bottleneck
+        const ctqRadio = document.querySelector('input[name="ctq"]:checked');
+        const criticalToQuality = ctqRadio ? ctqRadio.value : '';
+        const bottleneckCheckbox = document.getElementById('bottleneckCheckbox');
+        const bottleneck = bottleneckCheckbox ? bottleneckCheckbox.checked : false;
+        
         // Get custom machine name if applicable
         let customMachineName = '';
-        if (machineName === 'Others') {
+        if (document.getElementById('studyMachine')?.value === 'Others') {
             customMachineName = document.getElementById('customMachineName')?.value.trim() || '';
             if (!customMachineName) {
                 showToast('Please enter a custom machine name', 'error');
@@ -3078,22 +2953,24 @@ async function saveTimeStudyData() {
             }
         }
         
-        // Get other machines with efficiencies
+        // Get other machines
         const otherMachines = [];
-        const otherMachineEfficiencies = [];
-        const selectedOtherMachines = document.getElementById('selectedOtherMachines');
-        if (selectedOtherMachines) {
-            selectedOtherMachines.querySelectorAll('.selected-tag').forEach(tag => {
-                otherMachines.push(tag.textContent.trim().replace('×', '').replace(/ /g, '_'));
-            });
+        const otherMachineEfficiencies = {};
+        document.querySelectorAll('#selectedOtherMachines .selected-tag').forEach(tag => {
+            const machineValue = tag.querySelector('i')?.getAttribute('data-value');
+            if (machineValue) {
+                otherMachines.push(machineValue);
+                // For now, set default efficiency of 50% for other machines
+                otherMachineEfficiencies[machineValue] = 50;
+            }
+        });
+        
+        // Update operator machine skill
+        const machineName = document.getElementById('studyMachine')?.value === 'Others' ? 
+            customMachineName : document.getElementById('studyMachine')?.value;
+        if (machineName) {
+            updateOperatorMachineSkill(operatorId, machineName, efficiency);
         }
-        
-        // For each other machine, get efficiency if provided
-        // In a real implementation, you would need input fields for each machine's efficiency
-        // For now, we'll use a default value or prompt the user
-        
-        // Update operator machine skill - V18 CHANGE: Use updated logic
-        updateOperatorMachineSkill(operatorId, machineName === 'Others' ? customMachineName : machineName, efficiency);
         
         // Save performance record
         const docRef = doc(collection(db, 'performance'));
@@ -3105,19 +2982,20 @@ async function saveTimeStudyData() {
             operatorId: operatorId,
             operatorName: operator.name,
             operation: document.getElementById('studyOperation')?.value || '',
-            machineName: machineName,
+            machineName: document.getElementById('studyMachine')?.value || '',
             customMachineName: customMachineName,
             standardSMV: standardSMV,
             workingSMV: workingSMV,
             efficiency: efficiency,
+            operationGrade: operationGrade,
+            criticalToQuality: criticalToQuality,
+            bottleneck: bottleneck,
             otherMachines: otherMachines.join(', '),
-            otherMachineEfficiencies: otherMachineEfficiencies.join(', '),
+            otherMachineEfficiencies: otherMachineEfficiencies,
             cycleTimes: lapTimes,
             avgCycleTime: avgTime,
-            personalAllowance: PERSONAL_ALLOWANCE,
-            contingencyAllowance: CONTINGENCY_ALLOWANCE,
-            machineAllowance: machineAllowance,
-            totalAllowance: totalAllowance
+            allowance: GENERAL_ALLOWANCE,
+            lastUpdated: serverTimestamp()
         });
         
         showToast('Performance data saved successfully!');
@@ -3130,7 +3008,7 @@ async function saveTimeStudyData() {
     }
 }
 
-// Update performance record with machine-specific allowance
+// Update performance record with general allowance and v17 features
 async function updatePerformanceRecord(recordId, formData) {
     try {
         const recordRef = doc(db, 'performance', recordId);
@@ -3146,20 +3024,10 @@ async function updatePerformanceRecord(recordId, formData) {
             .map(time => parseFloat(time.trim()))
             .filter(time => !isNaN(time));
         
-        // Calculate machine allowance
-        const machineName = record.machineName || '';
-        let machineAllowance = record.machineAllowance || getMachineAllowance(machineName);
-        
-        // If it's a custom machine, try to get allowance
-        if (machineName === 'Others' && record.customMachineName) {
-            machineAllowance = getMachineAllowance('Others');
-        }
-        
-        // Recalculate working SMV and efficiency with machine-specific allowance
+        // Recalculate working SMV and efficiency with general allowance
         const avgTime = cycleTimes.length > 0 ? 
             cycleTimes.reduce((a, b) => a + b, 0) / cycleTimes.length : 0;
-        const totalAllowance = PERSONAL_ALLOWANCE + CONTINGENCY_ALLOWANCE + machineAllowance;
-        const workingSMV = (avgTime / 60) * (1 + totalAllowance/100);
+        const workingSMV = (avgTime / 60) * (1 + GENERAL_ALLOWANCE/100);
         const efficiency = formData.standardSMV > 0 ? 
             (formData.standardSMV / workingSMV) * 100 : 0;
         
@@ -3167,12 +3035,10 @@ async function updatePerformanceRecord(recordId, formData) {
             standardSMV: formData.standardSMV,
             workingSMV: workingSMV,
             efficiency: efficiency,
+            operationGrade: formData.operationGrade,
             cycleTimes: cycleTimes,
             avgCycleTime: avgTime,
-            personalAllowance: PERSONAL_ALLOWANCE,
-            contingencyAllowance: CONTINGENCY_ALLOWANCE,
-            machineAllowance: machineAllowance,
-            totalAllowance: totalAllowance,
+            allowance: GENERAL_ALLOWANCE,
             lastUpdated: serverTimestamp()
         });
         
@@ -3196,15 +3062,22 @@ async function deletePerformanceRecord(id) {
     }
 }
 
-// Setup event listeners v18 - Updated with all changes for v18
+// Setup event listeners for v17
 function setupEventListeners() {
     // Setup mobile menu
     setupMobileMenu();
     
-    // Dashboard Tab v16
+    // Dashboard Tab - UPDATED v17
     const dashboardLineSelect = document.getElementById('dashboardLineSelect');
     if (dashboardLineSelect) {
         dashboardLineSelect.addEventListener('change', () => {
+            updateDashboard();
+        });
+    }
+    
+    const timeStudiesLineSelect = document.getElementById('timeStudiesLineSelect');
+    if (timeStudiesLineSelect) {
+        timeStudiesLineSelect.addEventListener('change', () => {
             updateDashboard();
         });
     }
@@ -3224,31 +3097,38 @@ function setupEventListeners() {
         });
     }
     
-    // V18 CHANGE: Remove clickable behavior from Total Operators card
-    // Total Operators card should NOT be clickable
+    // Clickable Skill Group Cards in dashboard
+    const groupCards = [
+        { id: 'dashboardGroupACard', group: 'Group A' },
+        { id: 'dashboardGroupBCard', group: 'Group B' },
+        { id: 'dashboardGroupCCard', group: 'Group C' },
+        { id: 'dashboardGroupDCard', group: 'Group D' }
+    ];
     
-    // Clickable Skill Group Cards
-    const dashboardGroupACard = document.getElementById('dashboardGroupACard');
-    const dashboardGroupBCard = document.getElementById('dashboardGroupBCard');
-    const dashboardGroupCCard = document.getElementById('dashboardGroupCCard');
-    const dashboardGroupDCard = document.getElementById('dashboardGroupDCard');
+    groupCards.forEach(({ id, group }) => {
+        const card = document.getElementById(id);
+        if (card) {
+            card.addEventListener('click', () => showGroupOperators(group, 'dashboard'));
+        }
+    });
     
-    if (dashboardGroupACard) dashboardGroupACard.addEventListener('click', () => showGroupOperators('Group A', 'dashboard'));
-    if (dashboardGroupBCard) dashboardGroupBCard.addEventListener('click', () => showGroupOperators('Group B', 'dashboard'));
-    if (dashboardGroupCCard) dashboardGroupCCard.addEventListener('click', () => showGroupOperators('Group C', 'dashboard'));
-    if (dashboardGroupDCard) dashboardGroupDCard.addEventListener('click', () => showGroupOperators('Group D', 'dashboard'));
-    
-    // Operators Tab v16
+    // Operators Tab
     if (elements.searchInput) {
         elements.searchInput.addEventListener('input', filterOperators);
     }
-    
     if (elements.skillFilter) {
         elements.skillFilter.addEventListener('change', filterOperators);
     }
-    
     if (elements.lineFilter) {
         elements.lineFilter.addEventListener('change', filterOperators);
+    }
+    
+    const operatorsLineFilter = document.getElementById('operatorsLineFilter');
+    if (operatorsLineFilter) {
+        operatorsLineFilter.addEventListener('change', () => {
+            updateStats();
+            filterOperators();
+        });
     }
     
     // Performance Tab
@@ -3267,7 +3147,7 @@ function setupEventListeners() {
         dateFilter.addEventListener('change', filterPerformanceData);
     }
     
-    // Action buttons v16 (removed import/export buttons)
+    // Action buttons
     const addOperatorBtn = document.getElementById('addOperatorBtn');
     if (addOperatorBtn) {
         addOperatorBtn.addEventListener('click', () => {
@@ -3299,29 +3179,54 @@ function setupEventListeners() {
         });
     }
     
+    const editExistingDetailsBtn = document.getElementById('editExistingDetailsBtn');
+    if (editExistingDetailsBtn) {
+        editExistingDetailsBtn.addEventListener('click', () => {
+            openEditExistingDetailsModal();
+        });
+    }
+    
     // Stopwatch event listeners
     const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const lapBtn = document.getElementById('lapBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const savePerformanceData = document.getElementById('savePerformanceData');
-    const resetStopwatchBtn = document.getElementById('resetStopwatch');
+    if (startBtn) {
+        startBtn.addEventListener('click', startStopwatch);
+    }
     
-    if (startBtn) startBtn.addEventListener('click', startStopwatch);
-    if (stopBtn) stopBtn.addEventListener('click', stopStopwatch);
-    if (lapBtn) lapBtn.addEventListener('click', recordLap);
-    if (resetBtn) resetBtn.addEventListener('click', resetStopwatch);
-    if (savePerformanceData) savePerformanceData.addEventListener('click', async () => {
-        await saveTimeStudyData();
-    });
-    if (resetStopwatchBtn) resetStopwatchBtn.addEventListener('click', () => {
-        resetStopwatch();
-        elements.lapsList.innerHTML = '';
-        document.getElementById('avgCycleTime').textContent = '0.00';
-        document.getElementById('totalCycleTime').textContent = '0.00';
-        document.getElementById('workingSMVResult').textContent = '0.00';
-        document.getElementById('efficiencyResult').textContent = '0%';
-    });
+    const pauseBtn = document.getElementById('pauseBtn');
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', pauseStopwatch);
+    }
+    
+    const lapBtn = document.getElementById('lapBtn');
+    if (lapBtn) {
+        lapBtn.addEventListener('click', recordLap);
+    }
+    
+    const resetBtn = document.getElementById('resetBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetStopwatch);
+    }
+    
+    const savePerformanceDataBtn = document.getElementById('savePerformanceData');
+    if (savePerformanceDataBtn) {
+        savePerformanceDataBtn.addEventListener('click', async () => {
+            await saveTimeStudyData();
+        });
+    }
+    
+    const resetStopwatchBtn = document.getElementById('resetStopwatch');
+    if (resetStopwatchBtn) {
+        resetStopwatchBtn.addEventListener('click', () => {
+            resetStopwatch();
+            if (elements.lapsList) {
+                elements.lapsList.innerHTML = '';
+            }
+            document.getElementById('avgCycleTime').textContent = '0.00';
+            document.getElementById('totalCycleTime').textContent = '0.00';
+            document.getElementById('workingSMVResult').textContent = '0.00';
+            document.getElementById('efficiencyResult').textContent = '0%';
+        });
+    }
     
     // Cycle count selection
     document.querySelectorAll('input[name="cycleCount"]').forEach(radio => {
@@ -3335,7 +3240,7 @@ function setupEventListeners() {
                     manualCycleInputs.style.display = 'block';
                 }
                 // Set up manual inputs
-                setupManualCycleInputs(cycleCount);
+                setupManualCycleInputs(3);
             } else {
                 const manualCycleInputs = document.getElementById('manualCycleInputs');
                 if (manualCycleInputs) {
@@ -3346,9 +3251,11 @@ function setupEventListeners() {
                         resetStopwatch();
                     } else {
                         // Revert to previous selection
-                        const previousValue = lapCounter >= 3 ? '3' : '5';
-                        const previousRadio = document.querySelector(`input[name="cycleCount"][value="${previousValue}"]`);
-                        if (previousRadio) previousRadio.checked = true;
+                        const previousValue = lapCounter >= 5 ? '5' : '3';
+                        const prevRadio = document.querySelector(`input[name="cycleCount"][value="${previousValue}"]`);
+                        if (prevRadio) {
+                            prevRadio.checked = true;
+                        }
                     }
                 }
             }
@@ -3371,11 +3278,14 @@ function setupEventListeners() {
                 <label>Cycle ${cycleNum} (seconds)</label>
                 <input type="number" class="manual-cycle-time" step="0.001" placeholder="e.g., 25.345">
             `;
-            document.getElementById('manualCycleGrid').appendChild(cycleDiv);
+            const manualCycleGrid = document.getElementById('manualCycleGrid');
+            if (manualCycleGrid) {
+                manualCycleGrid.appendChild(cycleDiv);
+            }
         });
     }
     
-    // Machine dropdown with custom option - Show allowance when machine is selected
+    // Machine dropdown with custom option
     const studyMachine = document.getElementById('studyMachine');
     if (studyMachine) {
         studyMachine.addEventListener('change', (e) => {
@@ -3388,13 +3298,15 @@ function setupEventListeners() {
                 const customMachineRow = document.getElementById('customMachineRow');
                 if (customMachineRow) {
                     customMachineRow.style.display = 'none';
+                    const customMachineName = document.getElementById('customMachineName');
+                    if (customMachineName) {
+                        customMachineName.value = '';
+                    }
                 }
-                const customMachineName = document.getElementById('customMachineName');
-                if (customMachineName) customMachineName.value = '';
             }
             
-            // Update allowance display when machine is selected
-            updateAllowanceDisplay(e.target.value);
+            // Update allowance display
+            updateAllowanceDisplay();
         });
     }
     
@@ -3402,7 +3314,7 @@ function setupEventListeners() {
     const customMachineName = document.getElementById('customMachineName');
     if (customMachineName) {
         customMachineName.addEventListener('input', () => {
-            updateAllowanceDisplay('Others');
+            updateAllowanceDisplay();
         });
     }
     
@@ -3418,30 +3330,56 @@ function setupEventListeners() {
                 const perfCustomMachineRow = document.getElementById('perfCustomMachineRow');
                 if (perfCustomMachineRow) {
                     perfCustomMachineRow.style.display = 'none';
+                    const perfCustomMachineName = document.getElementById('perfCustomMachineName');
+                    if (perfCustomMachineName) {
+                        perfCustomMachineName.value = '';
+                    }
                 }
-                const perfCustomMachineName = document.getElementById('perfCustomMachineName');
-                if (perfCustomMachineName) perfCustomMachineName.value = '';
+            }
+        });
+    }
+    
+    // Line number auto-fill for time study
+    if (elements.studyLineNo) {
+        elements.studyLineNo.addEventListener('change', function() {
+            const lineNo = this.value;
+            if (lineNo) {
+                autoFillStyleAndProduct(lineNo, 'study');
+            }
+        });
+    }
+    
+    // Line number auto-fill for performance modal
+    const perfLineNo = document.getElementById('perfLineNo');
+    if (perfLineNo) {
+        perfLineNo.addEventListener('change', function() {
+            const lineNo = this.value;
+            if (lineNo) {
+                autoFillStyleAndProduct(lineNo, 'performance');
             }
         });
     }
     
     // Group modal search and sort
     const groupSearchInput = document.getElementById('groupSearchInput');
-    const groupSortBy = document.getElementById('groupSortBy');
-    
     if (groupSearchInput) {
         groupSearchInput.addEventListener('input', () => {
-            const sortBy = groupSortBy ? groupSortBy.value : 'skillScore';
+            const sortBy = document.getElementById('groupSortBy')?.value || 'skillScore';
             const currentGroup = document.getElementById('groupModalTitle')?.textContent.replace(' Operators', '').split(' - ')[0];
-            if (currentGroup) showGroupOperators(currentGroup);
+            if (currentGroup) {
+                showGroupOperators(currentGroup);
+            }
         });
     }
     
+    const groupSortBy = document.getElementById('groupSortBy');
     if (groupSortBy) {
         groupSortBy.addEventListener('change', (e) => {
             const sortBy = e.target.value;
             const currentGroup = document.getElementById('groupModalTitle')?.textContent.replace(' Operators', '').split(' - ')[0];
-            if (currentGroup) showGroupOperators(currentGroup);
+            if (currentGroup) {
+                showGroupOperators(currentGroup);
+            }
         });
     }
     
@@ -3450,18 +3388,11 @@ function setupEventListeners() {
     if (addOperatorForm) {
         addOperatorForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const newOperatorId = document.getElementById('newOperatorId');
-            const newOperatorName = document.getElementById('newOperatorName');
-            const newSewLine = document.getElementById('newSewLine');
-            const newSkillLevel = document.getElementById('newSkillLevel');
-            
-            if (!newOperatorId || !newOperatorName || !newSewLine || !newSkillLevel) return;
-            
             const operatorData = {
-                operatorId: newOperatorId.value.trim(),
-                name: newOperatorName.value.trim(),
-                sewLine: newSewLine.value.trim() || null,
-                skillLevel: newSkillLevel.value || null
+                operatorId: document.getElementById('newOperatorId').value.trim(),
+                name: document.getElementById('newOperatorName').value.trim(),
+                sewLine: document.getElementById('newSewLine').value.trim() || null,
+                skillLevel: document.getElementById('newSkillLevel').value || null
             };
             
             if (await saveOperator(operatorData, false)) {
@@ -3470,6 +3401,7 @@ function setupEventListeners() {
                 populateOperatorDropdowns();
                 populateLineFilter();
                 populateDashboardLineSelect();
+                populateOperatorsLineFilter();
                 updateGarmentSMVSelectors();
             }
         });
@@ -3480,14 +3412,9 @@ function setupEventListeners() {
     if (editCellForm) {
         editCellForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const editSewLine = document.getElementById('editSewLine');
-            const editSkillLevel = document.getElementById('editSkillLevel');
-            
-            if (!editSewLine || !editSkillLevel) return;
-            
             const operatorData = {
-                sewLine: editSewLine.value.trim() || null,
-                skillLevel: editSkillLevel.value || null
+                sewLine: document.getElementById('editSewLine').value.trim() || null,
+                skillLevel: document.getElementById('editSkillLevel').value || null
             };
             
             if (await saveOperator(operatorData, true)) {
@@ -3496,23 +3423,17 @@ function setupEventListeners() {
         });
     }
 
-    // Edit performance form with machine-specific allowance
+    // Edit performance form with general allowance
     const editPerformanceForm = document.getElementById('editPerformanceForm');
     if (editPerformanceForm) {
         editPerformanceForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const editRecordId = document.getElementById('editRecordId');
-            const editRecordStdSMV = document.getElementById('editRecordStdSMV');
-            const editRecordWorkingSMV = document.getElementById('editRecordWorkingSMV');
-            const editRecordCycleTimes = document.getElementById('editRecordCycleTimes');
-            
-            if (!editRecordId || !editRecordStdSMV || !editRecordWorkingSMV || !editRecordCycleTimes) return;
-            
-            const recordId = editRecordId.textContent;
+            const recordId = document.getElementById('editRecordId').textContent;
             const formData = {
-                standardSMV: parseFloat(editRecordStdSMV.value),
-                workingSMV: parseFloat(editRecordWorkingSMV.value),
-                cycleTimes: editRecordCycleTimes.value
+                standardSMV: parseFloat(document.getElementById('editRecordStdSMV').value),
+                workingSMV: parseFloat(document.getElementById('editRecordWorkingSMV').value),
+                operationGrade: document.getElementById('editRecordOperationGrade').value,
+                cycleTimes: document.getElementById('editRecordCycleTimes').value
             };
             
             if (await updatePerformanceRecord(recordId, formData)) {
@@ -3521,12 +3442,12 @@ function setupEventListeners() {
             }
         });
     }
-       
+    
     // Score slider sync
     const editSkillScoreInput = document.getElementById('editSkillScore');
     const scoreSlider = document.getElementById('scoreSlider');
     
-    if (editSkillScoreInput && scoreSlider) {
+    if (scoreSlider && editSkillScoreInput) {
         scoreSlider.addEventListener('input', (e) => {
             editSkillScoreInput.value = (e.target.value / 100).toFixed(2);
         });
@@ -3570,109 +3491,213 @@ function setupEventListeners() {
         }
     });
     
-    // Auto-fill style and product when line number is entered
-    if (elements.studyLineNo) {
-        elements.studyLineNo.addEventListener('change', (e) => {
-            const lineNo = e.target.value;
-            if (lineNo) {
-                autoFillStyleAndProduct(lineNo, 'study');
+    // CTQ radio button event listener for bottleneck checkbox
+    document.querySelectorAll('input[name="ctq"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const bottleneckContainer = document.getElementById('bottleneckContainer');
+            if (bottleneckContainer) {
+                if (e.target.value === 'critical') {
+                    bottleneckContainer.style.display = 'block';
+                } else {
+                    bottleneckContainer.style.display = 'none';
+                    const bottleneckCheckbox = document.getElementById('bottleneckCheckbox');
+                    if (bottleneckCheckbox) {
+                        bottleneckCheckbox.checked = false;
+                    }
+                }
+            }
+        });
+    });
+    
+    // Edit Existing Details Modal functionality
+    const editExistingOperatorSelect = document.getElementById('editExistingOperatorSelect');
+    if (editExistingOperatorSelect) {
+        editExistingOperatorSelect.addEventListener('change', function() {
+            const operatorId = this.value;
+            if (operatorId) {
+                const operator = operators.find(op => op.operatorId === operatorId);
+                if (operator) {
+                    // Update operator info
+                    document.getElementById('editExistingOperatorName').textContent = operator.name;
+                    document.getElementById('editExistingOperatorId').textContent = operatorId;
+                    document.getElementById('editExistingCurrentGrade').textContent = calculateMultiSkillGrade(operatorId);
+                    
+                    // Get performance records for this operator
+                    const operatorRecords = performanceData.filter(record => record.operatorId === operatorId);
+                    document.getElementById('editExistingRecordCount').textContent = operatorRecords.length;
+                    
+                    // Populate record select
+                    const recordSelect = document.getElementById('editExistingRecordSelect');
+                    if (recordSelect) {
+                        recordSelect.innerHTML = '<option value="">Select Record</option>';
+                        operatorRecords.forEach((record, index) => {
+                            const option = document.createElement('option');
+                            option.value = record.id;
+                            option.textContent = `Record ${index + 1}: ${record.operation || 'No Operation'} (${record.timestamp.toLocaleString()})`;
+                            recordSelect.appendChild(option);
+                        });
+                    }
+                }
             }
         });
     }
     
-    const perfLineNo = document.getElementById('perfLineNo');
-    if (perfLineNo) {
-        perfLineNo.addEventListener('change', (e) => {
-            const lineNo = e.target.value;
-            if (lineNo) {
-                autoFillStyleAndProduct(lineNo, 'performance');
+    const editExistingRecordSelect = document.getElementById('editExistingRecordSelect');
+    if (editExistingRecordSelect) {
+        editExistingRecordSelect.addEventListener('change', function() {
+            const recordId = this.value;
+            if (recordId) {
+                const record = performanceData.find(r => r.id === recordId);
+                if (record) {
+                    // Populate form fields
+                    document.getElementById('editExistingOperation').value = record.operation || '';
+                    document.getElementById('editExistingMachine').value = record.machineName || '';
+                    document.getElementById('editExistingStdSMV').value = record.standardSMV || '';
+                    document.getElementById('editExistingWorkingSMV').value = record.workingSMV || '';
+                    document.getElementById('editExistingEfficiency').value = record.efficiency || '';
+                    document.getElementById('editExistingOperationGrade').value = record.operationGrade || '';
+                    
+                    // Show/hide custom machine row
+                    const customMachineRow = document.getElementById('editExistingCustomMachineRow');
+                    if (customMachineRow) {
+                        if (record.machineName === 'Others') {
+                            customMachineRow.style.display = 'block';
+                            document.getElementById('editExistingCustomMachineName').value = record.customMachineName || '';
+                        } else {
+                            customMachineRow.style.display = 'none';
+                        }
+                    }
+                    
+                    // Populate existing other machines
+                    const existingOtherMachinesList = document.getElementById('existingOtherMachinesList');
+                    if (existingOtherMachinesList) {
+                        existingOtherMachinesList.innerHTML = '';
+                        if (record.otherMachines) {
+                            const otherMachines = record.otherMachines.split(', ');
+                            const efficiencies = record.otherMachineEfficiencies || {};
+                            
+                            otherMachines.forEach(machine => {
+                                const efficiency = efficiencies[machine] || 0;
+                                const machineItem = document.createElement('div');
+                                machineItem.className = 'existing-other-machine-item';
+                                machineItem.innerHTML = `
+                                    <div>${machine}</div>
+                                    <div>${efficiency.toFixed(1)}%</div>
+                                `;
+                                existingOtherMachinesList.appendChild(machineItem);
+                            });
+                        }
+                    }
+                }
             }
         });
     }
     
-    // Group modal export button
-    const exportGroupBtn = document.getElementById('exportGroupBtn');
-    if (exportGroupBtn) {
-        exportGroupBtn.addEventListener('click', () => {
-            const group = document.getElementById('groupModalTitle')?.textContent.replace(' Operators', '').split(' - ')[0];
-            if (group) {
-                exportGroupOperators(group);
+    // Add other machine button
+    const addOtherMachineBtn = document.getElementById('addOtherMachineBtn');
+    if (addOtherMachineBtn) {
+        addOtherMachineBtn.addEventListener('click', () => {
+            const container = document.getElementById('otherMachinesContainer');
+            if (container) {
+                const newItem = document.createElement('div');
+                newItem.className = 'other-machine-item';
+                newItem.innerHTML = `
+                    <div style="flex: 2;">
+                        <select class="other-machine-select" style="width: 100%;">
+                            <option value="">Select Machine</option>
+                            ${Object.entries(machineFamilies).map(([family, machines]) => `
+                                <optgroup label="${family}">
+                                    ${machines.map(machine => `
+                                        <option value="${machine}">${machine}</option>
+                                    `).join('')}
+                                </optgroup>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <input type="number" class="other-machine-efficiency" min="0" max="200" step="0.1" placeholder="Efficiency %">
+                    </div>
+                    <div>
+                        <button type="button" class="btn-icon remove-other-machine" title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(newItem);
+                
+                // Add remove event listener
+                newItem.querySelector('.remove-other-machine').addEventListener('click', () => {
+                    newItem.remove();
+                });
+            }
+        });
+    }
+    
+    // Save existing details button
+    const saveExistingDetailsBtn = document.getElementById('saveExistingDetailsBtn');
+    if (saveExistingDetailsBtn) {
+        saveExistingDetailsBtn.addEventListener('click', async () => {
+            const recordId = document.getElementById('editExistingRecordSelect').value;
+            if (!recordId) {
+                showToast('Please select a record to edit', 'error');
+                return;
+            }
+            
+            try {
+                const recordRef = doc(db, 'performance', recordId);
+                const updates = {
+                    operation: document.getElementById('editExistingOperation').value,
+                    machineName: document.getElementById('editExistingMachine').value,
+                    standardSMV: parseFloat(document.getElementById('editExistingStdSMV').value) || 0,
+                    workingSMV: parseFloat(document.getElementById('editExistingWorkingSMV').value) || 0,
+                    efficiency: parseFloat(document.getElementById('editExistingEfficiency').value) || 0,
+                    operationGrade: document.getElementById('editExistingOperationGrade').value,
+                    lastUpdated: serverTimestamp()
+                };
+                
+                // Handle custom machine
+                if (updates.machineName === 'Others') {
+                    updates.customMachineName = document.getElementById('editExistingCustomMachineName').value || '';
+                }
+                
+                // Handle other machines
+                const otherMachineItems = document.querySelectorAll('#otherMachinesContainer .other-machine-item');
+                const otherMachines = [];
+                const otherMachineEfficiencies = {};
+                
+                otherMachineItems.forEach(item => {
+                    const machineSelect = item.querySelector('.other-machine-select');
+                    const efficiencyInput = item.querySelector('.other-machine-efficiency');
+                    
+                    if (machineSelect && machineSelect.value && efficiencyInput && efficiencyInput.value) {
+                        const machine = machineSelect.value;
+                        const efficiency = parseFloat(efficiencyInput.value) || 0;
+                        otherMachines.push(machine);
+                        otherMachineEfficiencies[machine] = efficiency;
+                    }
+                });
+                
+                updates.otherMachines = otherMachines.join(', ');
+                updates.otherMachineEfficiencies = otherMachineEfficiencies;
+                
+                await updateDoc(recordRef, updates);
+                showToast('Record updated successfully!');
+                closeModal('editExistingDetailsModal');
+            } catch (error) {
+                console.error('Error updating record:', error);
+                showToast('Error updating record: ' + error.message, 'error');
             }
         });
     }
 }
 
-// Show all operators modal - V18 CHANGE: This function is not needed as Total Operators is not clickable
-// Removed the click event listener for Total Operators card
-
-// Export group operators to Excel (kept for backward compatibility, though import/export is removed)
-function exportGroupOperators(group) {
-    const filteredOperators = operators.filter(operator => {
-        const multiSkillGrade = calculateMultiSkillGrade(operator.operatorId);
-        return multiSkillGrade === group;
-    });
-    
-    const data = filteredOperators.map(operator => {
-        const operatorEfficiency = getOperatorAverageEfficiency(operator.operatorId);
-        const skillScore = calculateSkillScore(operator.operatorId);
-        
-        return {
-            'Operator ID': operator.operatorId,
-            'Operator Name': operator.name,
-            'Sew Line': operator.sewLine || '',
-            'Skill Level': group,
-            'Average Efficiency': operatorEfficiency.toFixed(1) + '%',
-            'Skill Score': skillScore.toFixed(2),
-            'Multi-Skill Grade': group
-        };
-    });
-    
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, group);
-    
-    const filename = `${group}_Operators_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(workbook, filename);
-    showToast(`${group} operators exported successfully!`);
-}
-
-// Initialize application
-document.addEventListener('DOMContentLoaded', async () => {
-    // Remove Skill Allocation tab from DOM if it exists
-    const skillAllocationTab = document.querySelector('.nav-item[data-tab="skill-allocation"]');
-    if (skillAllocationTab) {
-        skillAllocationTab.remove();
-    }
-    
-    // Remove Skill Allocation content if it exists
-    const skillAllocationContent = document.getElementById('skill-allocation');
-    if (skillAllocationContent) {
-        skillAllocationContent.remove();
-    }
-    
-    await loadData();
-    setupEventListeners();
-    setupSidebarNavigation();
-    updateRealTimeClock();
-    loadOperatorMachineSkills();
-    
-    // Start real-time clock
-    setInterval(updateRealTimeClock, 1000);
-    
-    // Hide loading overlay
+// Initialize the application
+window.addEventListener('load', () => {
+    // Ensure DOM is fully loaded
     setTimeout(() => {
-        if (elements.loadingOverlay) {
-            elements.loadingOverlay.style.display = 'none';
+        if (typeof Chart !== 'undefined') {
+            // Charts are loaded
+            console.log('Chart.js loaded successfully');
         }
-    }, 1500);
-    
-    // Check for last added operator highlight
-    if (lastAddedOperatorId) {
-        setTimeout(() => {
-            highlightNewOperator(lastAddedOperatorId);
-        }, 1000);
-    }
-    
-    // Adjust dashboard for mobile on load
-    adjustDashboardForMobile();
+    }, 1000);
 });
