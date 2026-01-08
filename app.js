@@ -63,7 +63,7 @@ const supervisorMapping = {
     'S-32': 'KALU CHARAN'
 };
 
-// Machine families grouped for dropdowns (simplified for v17)
+// Machine families grouped for dropdowns
 const machineFamilies = {
     'KANSAI Family': [
         'KANSAI',
@@ -145,8 +145,9 @@ let efficiencyChart = null;
 let linePerformanceChart = null;
 let machinePerformanceChart = null;
 let weeklyTrendChart = null;
+let bottleneckChart = null;
 
-// CHANGED: General allowance of 16.67% for all machines
+// General allowance of 16.67% for all machines
 const GENERAL_ALLOWANCE = 16.67;
 
 // DOM Elements
@@ -160,41 +161,25 @@ const elements = {
     headerTimeStudies: document.getElementById('headerTimeStudies'),
     dataVersion: document.getElementById('dataVersion'),
     lastSync: document.getElementById('lastSync'),
-    totalOperators: document.getElementById('totalOperators'),
-    groupACount: document.getElementById('operatorsGroupACount'),
-    groupBCount: document.getElementById('operatorsGroupBCount'),
-    groupCCount: document.getElementById('operatorsGroupCCount'),
-    groupDCount: document.getElementById('operatorsGroupDCount'),
-    performanceRecords: document.getElementById('performanceRecords'),
-    performanceAvgEfficiency: document.getElementById('performanceAvgEfficiency'),
-    performanceTotalOps: document.getElementById('performanceTotalOps'),
-    timeStudies: document.getElementById('timeStudies'),
-    timeStudyAvgCycle: document.getElementById('timeStudyAvgCycle'),
-    timeStudyCompleted: document.getElementById('timeStudyCompleted'),
-    avgEfficiency: document.getElementById('avgEfficiency'),
-    avgSMV: document.getElementById('avgSMV'),
-    avgWorkingSMV: document.getElementById('avgWorkingSMV'),
-    totalOperations: document.getElementById('totalOperations'),
-    analysisSummary: document.getElementById('analysisSummary'),
-    activeLines: document.getElementById('activeLines'),
-    avgSMVDiff: document.getElementById('avgSMVDiff'),
+    // Operator tab - UPDATED: Removed elements for 4 cards
     searchInput: document.getElementById('searchInput'),
     skillFilter: document.getElementById('skillFilter'),
     lineFilter: document.getElementById('lineFilter'),
     operatorsBody: document.getElementById('operatorsBody'),
+    // Performance tab - UPDATED: Removed average efficiency and machine usage statistics
     performanceBody: document.getElementById('performanceBody'),
     notificationToast: document.getElementById('notificationToast'),
     toastMessage: document.getElementById('toastMessage'),
     stopwatchDisplay: document.getElementById('stopwatchDisplay'),
     lapDisplay: document.getElementById('lapDisplay'),
     lapsList: document.getElementById('lapsList'),
-    machineUsageStats: document.getElementById('machineUsageStats'),
+    // UPDATED: Removed machine usage stats from performance tab
     groupOperatorsList: document.getElementById('groupOperatorsList'),
     groupModalTitle: document.getElementById('groupModalTitle'),
     groupOperatorCount: document.getElementById('groupOperatorCount'),
     groupAvgEfficiency: document.getElementById('groupAvgEfficiency'),
     groupDescription: document.getElementById('groupDescription'),
-    // Dashboard elements
+    // Dashboard elements - UPDATED: Added new dashboard elements
     dashboardTotalOperators: document.getElementById('dashboardTotalOperators'),
     dashboardGroupACount: document.getElementById('dashboardGroupACount'),
     dashboardGroupBCount: document.getElementById('dashboardGroupBCount'),
@@ -272,7 +257,7 @@ function updateRealTimeClock() {
     elements.sidebarLastUpdated.textContent = dateString;
     elements.headerLastSync.textContent = timeString;
     elements.lastSync.textContent = timeString;
-    elements.dataVersion.textContent = '17.0.0';
+    elements.dataVersion.textContent = '22.0.0'; // Updated version
 }
 
 // Setup sidebar navigation
@@ -299,8 +284,12 @@ function setupSidebarNavigation() {
                         updateDashboard();
                         createDashboardCharts();
                         updateGarmentSMVSelectors();
+                        updateBottleneckCard();
+                        updateHighPriorityCard(); // NEW: Update high priority card
                     } else if (tabId === 'performance') {
-                        updateMachineUsageStats();
+                        // UPDATED: Remove machine usage stats update
+                        // Just render the performance table
+                        renderPerformanceTable();
                     }
                 }
             });
@@ -312,8 +301,8 @@ function setupSidebarNavigation() {
         });
     });
     
-    // Make summary cards clickable
-    document.querySelectorAll('.stat-card.clickable').forEach(card => {
+    // Make summary cards clickable - UPDATED: Removed for operator tab cards
+    document.querySelectorAll('.stat-card.clickable:not([data-tab="operators"])').forEach(card => {
         card.addEventListener('click', () => {
             const tab = card.getAttribute('data-tab');
             const navItem = document.querySelector(`.nav-item[data-tab="${tab}"]`);
@@ -407,7 +396,7 @@ function closeMobileSidebar() {
     }
 }
 
-// Update Garment SMV selectors
+// Update Garment SMV selectors - UPDATED: Added high priority selectors
 function updateGarmentSMVSelectors() {
     // Get unique lines from performance data
     const lines = new Set();
@@ -434,7 +423,9 @@ function updateGarmentSMVSelectors() {
         document.getElementById('lineFilter'),
         document.getElementById('perfLineFilter'),
         document.getElementById('dashboardLineFilter'),
-        document.getElementById('timeStudiesLineSelect')
+        document.getElementById('timeStudiesLineSelect'),
+        document.getElementById('bottleneckLineSelect'),
+        document.getElementById('highPriorityLineSelect') // NEW: Add high priority line select
     ];
     
     lineSelectors.forEach(select => {
@@ -497,9 +488,113 @@ function updateGarmentSMVSelectors() {
         elements.workingSMVStyleSelect.addEventListener('change', () => calculateGarmentSMV('working'));
     }
     
+    // Event listeners for bottleneck card filters
+    const bottleneckLineSelect = document.getElementById('bottleneckLineSelect');
+    const bottleneckStyleSelect = document.getElementById('bottleneckStyleSelect');
+    
+    if (bottleneckLineSelect) {
+        bottleneckLineSelect.addEventListener('change', function() {
+            updateBottleneckStyleDropdown(this.value);
+            updateBottleneckCard();
+        });
+    }
+    
+    if (bottleneckStyleSelect) {
+        bottleneckStyleSelect.addEventListener('change', updateBottleneckCard);
+    }
+    
+    // NEW: Event listeners for high priority card filters
+    const highPriorityLineSelect = document.getElementById('highPriorityLineSelect');
+    const highPriorityStyleSelect = document.getElementById('highPriorityStyleSelect');
+    
+    if (highPriorityLineSelect) {
+        highPriorityLineSelect.addEventListener('change', function() {
+            updateHighPriorityStyleDropdown(this.value);
+            updateHighPriorityCard();
+        });
+    }
+    
+    if (highPriorityStyleSelect) {
+        highPriorityStyleSelect.addEventListener('change', updateHighPriorityCard);
+    }
+    
     // Initial calculation
     calculateGarmentSMV('standard');
     calculateGarmentSMV('working');
+}
+
+// Update bottleneck style dropdown
+function updateBottleneckStyleDropdown(line) {
+    const bottleneckStyleSelect = document.getElementById('bottleneckStyleSelect');
+    if (!bottleneckStyleSelect) return;
+    
+    // Clear existing options
+    bottleneckStyleSelect.innerHTML = '<option value="">All Styles</option>';
+    
+    if (!line) {
+        bottleneckStyleSelect.disabled = true;
+        return;
+    }
+    
+    // Get styles for the selected line
+    const styles = new Set();
+    performanceData.forEach(record => {
+        if (record.lineNo === line && record.styleNo) {
+            styles.add(record.styleNo);
+        }
+    });
+    
+    if (styles.size === 0) {
+        bottleneckStyleSelect.disabled = true;
+        return;
+    }
+    
+    bottleneckStyleSelect.disabled = false;
+    
+    // Add style options
+    Array.from(styles).sort().forEach(style => {
+        const option = document.createElement('option');
+        option.value = style;
+        option.textContent = style;
+        bottleneckStyleSelect.appendChild(option);
+    });
+}
+
+// NEW: Update high priority style dropdown
+function updateHighPriorityStyleDropdown(line) {
+    const highPriorityStyleSelect = document.getElementById('highPriorityStyleSelect');
+    if (!highPriorityStyleSelect) return;
+    
+    // Clear existing options
+    highPriorityStyleSelect.innerHTML = '<option value="">All Styles</option>';
+    
+    if (!line) {
+        highPriorityStyleSelect.disabled = true;
+        return;
+    }
+    
+    // Get styles for the selected line
+    const styles = new Set();
+    performanceData.forEach(record => {
+        if (record.lineNo === line && record.styleNo) {
+            styles.add(record.styleNo);
+        }
+    });
+    
+    if (styles.size === 0) {
+        highPriorityStyleSelect.disabled = true;
+        return;
+    }
+    
+    highPriorityStyleSelect.disabled = false;
+    
+    // Add style options
+    Array.from(styles).sort().forEach(style => {
+        const option = document.createElement('option');
+        option.value = style;
+        option.textContent = style;
+        highPriorityStyleSelect.appendChild(option);
+    });
 }
 
 // Auto-fill style and product from the latest record for the line
@@ -774,7 +869,7 @@ function resetStopwatch() {
     document.getElementById('efficiencyResult').textContent = '0%';
 }
 
-// Update allowance display - CHANGED to general allowance
+// Update allowance display
 function updateAllowanceDisplay() {
     if (!elements.allowanceInfo) return;
     
@@ -926,11 +1021,13 @@ async function loadData() {
             renderPerformanceTable();
             updatePerformanceStats();
             updateSummaryStats();
-            updateMachineUsageStats();
+            // UPDATED: Removed machine usage stats update for performance tab
             updateDashboardStats();
             updateGarmentSMVSelectors();
             updateActiveLinesCount();
             updateTimeStudiesCount();
+            updateBottleneckCard();
+            updateHighPriorityCard(); // NEW: Update high priority card
             
             // Update dashboard if active
             if (document.getElementById('dashboard')?.classList.contains('active')) {
@@ -977,11 +1074,32 @@ function updateActiveLinesCount() {
     if (elements.dashboardActiveLines) {
         elements.dashboardActiveLines.textContent = activeLinesCount;
     }
-    if (elements.activeLines) {
-        elements.activeLines.textContent = activeLinesCount;
-    }
     
     return activeLinesCount;
+}
+
+// Update time studies count for specific line
+function updateTimeStudiesCountForLine(line) {
+    if (!line) return updateTimeStudiesCount();
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Count time studies for today for the specific line
+    const timeStudiesCount = performanceData.filter(record => {
+        const recordDate = new Date(record.timestamp);
+        return recordDate >= today && 
+               record.cycleTimes && 
+               record.cycleTimes.length > 0 &&
+               record.lineNo === line;
+    }).length;
+    
+    // Update dashboard card
+    if (elements.dashboardTimeStudiesCount) {
+        elements.dashboardTimeStudiesCount.textContent = timeStudiesCount;
+    }
+    
+    return timeStudiesCount;
 }
 
 // Update time studies count
@@ -1117,7 +1235,7 @@ function getOperatorMachines(operatorId) {
     return Array.from(machines);
 }
 
-// Calculate multi-skill grade based on new logic with allocated skills - FIXED for v17
+// Calculate multi-skill grade based on new logic with allocated skills
 function calculateMultiSkillGrade(operatorId) {
     const machines = getOperatorMachines(operatorId);
     const machineCount = machines.length;
@@ -1142,25 +1260,21 @@ function calculateMultiSkillGrade(operatorId) {
     // Get operator's average efficiency
     const operatorEfficiency = getOperatorAverageEfficiency(operatorId);
     
-    // Apply v17 grading criteria
-    // Grade A: 3+ machine types, with at least 1 machine at A grade, others at B or C
+    // Apply grading criteria
     if (machineCount >= 3 && levelCounts['A'] >= 1 && 
         (levelCounts['B'] >= 1 || levelCounts['C'] >= 1) &&
         operatorEfficiency >= 70) {
         return 'Group A';
     }
-    // Grade B: 2+ machine types, with at least 1 machine at B grade, the other at C
     else if (machineCount >= 2 && levelCounts['B'] >= 1 && 
              (levelCounts['C'] >= 1 || machineCount === 2) &&
              operatorEfficiency >= 60) {
         return 'Group B';
     }
-    // Grade C: 2 machine types, both at C grade
     else if (machineCount >= 2 && levelCounts['C'] >= 2 &&
              operatorEfficiency >= 50) {
         return 'Group C';
     }
-    // Grade D: 1 machine type or doesn't meet above criteria
     else {
         return 'Group D';
     }
@@ -1220,11 +1334,14 @@ function populateLineFilter() {
     const perfLineFilter = document.getElementById('perfLineFilter');
     const dashboardLineFilter = document.getElementById('dashboardLineFilter');
     const timeStudiesLineSelect = document.getElementById('timeStudiesLineSelect');
+    const bottleneckLineSelect = document.getElementById('bottleneckLineSelect');
+    const highPriorityLineSelect = document.getElementById('highPriorityLineSelect'); // NEW
     
     // Clear and add default option
-    [lineFilter, perfLineFilter, dashboardLineFilter, timeStudiesLineSelect].forEach(select => {
+    [lineFilter, perfLineFilter, dashboardLineFilter, timeStudiesLineSelect, bottleneckLineSelect, highPriorityLineSelect].forEach(select => {
         if (select) {
-            select.innerHTML = select.id === 'dashboardLineFilter' || select.id === 'timeStudiesLineSelect' 
+            select.innerHTML = select.id === 'dashboardLineFilter' || select.id === 'timeStudiesLineSelect' || 
+                              select.id === 'bottleneckLineSelect' || select.id === 'highPriorityLineSelect'
                 ? '<option value="">All Lines</option>' 
                 : '<option value="">Filter by Sew Line...</option>';
         }
@@ -1254,6 +1371,17 @@ function populateLineFilter() {
         option4.value = line;
         option4.textContent = line;
         if (timeStudiesLineSelect) timeStudiesLineSelect.appendChild(option4);
+        
+        const option5 = document.createElement('option');
+        option5.value = line;
+        option5.textContent = line;
+        if (bottleneckLineSelect) bottleneckLineSelect.appendChild(option5);
+        
+        // NEW: Add option for high priority line select
+        const option6 = document.createElement('option');
+        option6.value = line;
+        option6.textContent = line;
+        if (highPriorityLineSelect) highPriorityLineSelect.appendChild(option6);
     });
 }
 
@@ -1299,7 +1427,7 @@ function populateOperatorsLineFilter() {
     });
 }
 
-// Update machine usage statistics - CHANGED: Count unique operators per machine
+// Update machine usage statistics - UPDATED: Added text wrapping for machine names
 function updateMachineUsageStats() {
     const machineUsage = {};
     
@@ -1319,49 +1447,29 @@ function updateMachineUsageStats() {
     // Convert to counts
     const machineOperatorCounts = {};
     Object.keys(machineUsage).forEach(machine => {
-        machineOperatorCounts[machine] = machineUsage[machine].size;
+        const count = machineUsage[machine].size;
+        // Only include machines with count >= 1
+        if (count >= 1) {
+            machineOperatorCounts[machine] = count;
+        }
     });
     
     // Sort by count descending
     const sortedMachines = Object.entries(machineOperatorCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10);
+        .sort((a, b) => b[1] - a[1]);
     
-    // Update performance tab
-    if (elements.machineUsageStats) {
-        if (sortedMachines.length === 0) {
-            elements.machineUsageStats.innerHTML = `
-                <div class="machine-usage-item">
-                    <span class="machine-name">No data available</span>
-                    <span class="machine-count">0</span>
-                </div>
-            `;
-        } else {
-            let machineHTML = '';
-            sortedMachines.forEach(([machine, count]) => {
-                machineHTML += `
-                    <div class="machine-usage-item">
-                        <span class="machine-name">${machine}</span>
-                        <span class="machine-count">${count} operators</span>
-                    </div>
-                `;
-            });
-            elements.machineUsageStats.innerHTML = machineHTML;
-        }
-    }
-    
-    // Update dashboard machine usage
+    // Update dashboard machine usage with text wrapping
     updateDashboardMachineUsage(sortedMachines);
 }
 
-// Update dashboard machine usage - CHANGED: Show unique operators per machine
+// Update dashboard machine usage with text wrapping
 function updateDashboardMachineUsage(sortedMachines) {
     if (!elements.dashboardMachineUsage) return;
     
     if (sortedMachines.length === 0) {
         elements.dashboardMachineUsage.innerHTML = `
             <div class="machine-usage-item">
-                <span class="machine-name">No data available</span>
+                <span class="machine-name" style="white-space: normal; word-wrap: break-word; text-align: left;">No data available</span>
                 <span class="machine-count">0</span>
             </div>
         `;
@@ -1372,7 +1480,7 @@ function updateDashboardMachineUsage(sortedMachines) {
     sortedMachines.slice(0, 5).forEach(([machine, count]) => {
         machineHTML += `
             <div class="machine-usage-item">
-                <span class="machine-name">${machine}</span>
+                <span class="machine-name" style="white-space: normal; word-wrap: break-word; text-align: left;">${machine}</span>
                 <span class="machine-count">${count} operators</span>
             </div>
         `;
@@ -1388,6 +1496,9 @@ function updateDashboard() {
     updateGarmentSMVSelectors();
     updateActiveLinesCount();
     updateTimeStudiesCount();
+    updateBottleneckCard();
+    updateHighPriorityCard(); // NEW: Update high priority card
+    updateMachineUsageStats(); // Update machine usage with text wrapping
 }
 
 // Update dashboard statistics
@@ -1472,22 +1583,33 @@ function updateDashboardStats() {
     if (elements.dashboardTotalOperations) elements.dashboardTotalOperations.textContent = totalOps;
     
     // Update time studies count with line filter
-    const timeStudiesCount = filteredPerformance.filter(record => 
-        record.cycleTimes && record.cycleTimes.length > 0
-    ).length;
+    const timeStudiesLine = document.getElementById('timeStudiesLineSelect')?.value || '';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let timeStudiesFiltered = performanceData.filter(record => {
+        const recordDate = new Date(record.timestamp);
+        return recordDate >= today && record.cycleTimes && record.cycleTimes.length > 0;
+    });
+    
+    if (timeStudiesLine) {
+        timeStudiesFiltered = timeStudiesFiltered.filter(record => record.lineNo === timeStudiesLine);
+    }
+    
+    const timeStudiesCount = timeStudiesFiltered.length;
     
     if (elements.dashboardTimeStudiesCount) {
         elements.dashboardTimeStudiesCount.textContent = timeStudiesCount;
     }
 }
 
-// Create dashboard charts - UPDATED: Removed skill distribution chart
+// Create dashboard charts - UPDATED: Removed weekly trend chart
 function createDashboardCharts() {
     // Destroy existing charts if they exist
     if (efficiencyChart) efficiencyChart.destroy();
     if (linePerformanceChart) linePerformanceChart.destroy();
     if (machinePerformanceChart) machinePerformanceChart.destroy();
-    if (weeklyTrendChart) weeklyTrendChart.destroy();
+    if (bottleneckChart) bottleneckChart.destroy();
     
     // 1. Efficiency Distribution Chart
     const efficiencyCtx = document.getElementById('efficiencyChart')?.getContext('2d');
@@ -1700,34 +1822,45 @@ function createDashboardCharts() {
         });
     }
     
-    // 4. Weekly Trend Chart
-    const weeklyCtx = document.getElementById('weeklyTrendChart')?.getContext('2d');
-    if (weeklyCtx) {
-        const weeklyData = getWeeklyTrendData();
+    // 4. Bottleneck Operations Chart
+    const bottleneckCtx = document.getElementById('bottleneckChart')?.getContext('2d');
+    if (bottleneckCtx) {
+        // Get bottleneck operations
+        const bottleneckOperations = performanceData.filter(record => record.bottleneck === true);
         
-        weeklyTrendChart = new Chart(weeklyCtx, {
-            type: 'line',
+        // Group by operation
+        const operationCounts = {};
+        bottleneckOperations.forEach(record => {
+            const operation = record.operation || 'Unknown';
+            if (!operationCounts[operation]) {
+                operationCounts[operation] = 0;
+            }
+            operationCounts[operation]++;
+        });
+        
+        // Sort by count
+        const sortedOperations = Object.entries(operationCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8);
+        
+        bottleneckChart = new Chart(bottleneckCtx, {
+            type: 'bar',
             data: {
-                labels: weeklyData.labels,
+                labels: sortedOperations.map(([operation]) => operation),
                 datasets: [{
-                    label: 'Average Efficiency',
-                    data: weeklyData.values,
-                    borderColor: 'rgba(67, 97, 238, 1)',
-                    backgroundColor: 'rgba(67, 97, 238, 0.1)',
-                    tension: 0.3,
-                    fill: true,
-                    pointBackgroundColor: 'rgba(67, 97, 238, 1)',
-                    pointBorderColor: '#fff',
-                    pointRadius: 4
+                    label: 'Bottleneck Occurrences',
+                    data: sortedOperations.map(([, count]) => count),
+                    backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
+                indexAxis: 'y',
                 scales: {
-                    y: {
-                        beginAtZero: false,
-                        min: 50,
-                        max: 100,
+                    x: {
+                        beginAtZero: true,
                         ticks: {
                             color: 'white'
                         },
@@ -1735,7 +1868,7 @@ function createDashboardCharts() {
                             color: 'rgba(255, 255, 255, 0.1)'
                         }
                     },
-                    x: {
+                    y: {
                         ticks: {
                             color: 'white'
                         },
@@ -1756,41 +1889,234 @@ function createDashboardCharts() {
     }
 }
 
-// Get weekly trend data
-function getWeeklyTrendData() {
-    const last7Days = [];
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        last7Days.push(date.toISOString().split('T')[0]);
+// Update Bottleneck Card - UPDATED: Beautified with better display
+function updateBottleneckCard() {
+    const bottleneckLineSelect = document.getElementById('bottleneckLineSelect');
+    const bottleneckStyleSelect = document.getElementById('bottleneckStyleSelect');
+    const bottleneckOperationsList = document.getElementById('bottleneckOperationsList');
+    
+    if (!bottleneckLineSelect || !bottleneckOperationsList) return;
+    
+    const selectedLine = bottleneckLineSelect.value;
+    const selectedStyle = bottleneckStyleSelect.value;
+    
+    // Filter bottleneck operations
+    let filteredData = performanceData.filter(record => record.bottleneck === true);
+    
+    if (selectedLine) {
+        filteredData = filteredData.filter(record => record.lineNo === selectedLine);
     }
     
-    const dailyAverages = {};
-    last7Days.forEach(day => {
-        dailyAverages[day] = { total: 0, count: 0 };
-    });
+    if (selectedStyle) {
+        filteredData = filteredData.filter(record => record.styleNo === selectedStyle);
+    }
     
-    performanceData.forEach(record => {
-        if (record.timestamp) {
-            const recordDate = record.timestamp.toISOString().split('T')[0];
-            if (dailyAverages[recordDate]) {
-                dailyAverages[recordDate].total += record.efficiency || 0;
-                dailyAverages[recordDate].count++;
-            }
+    // Clear existing list
+    bottleneckOperationsList.innerHTML = '';
+    
+    if (filteredData.length === 0) {
+        bottleneckOperationsList.innerHTML = `
+            <div class="no-data-message">
+                <i class="fas fa-info-circle"></i>
+                <p>No bottleneck operations found${selectedLine ? ` for Line ${selectedLine}` : ''}${selectedStyle ? `, Style ${selectedStyle}` : ''}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Group by operation and count occurrences
+    const operationCounts = {};
+    filteredData.forEach(record => {
+        const operation = record.operation || 'Unknown';
+        if (!operationCounts[operation]) {
+            operationCounts[operation] = {
+                count: 0,
+                records: []
+            };
         }
+        operationCounts[operation].count++;
+        operationCounts[operation].records.push(record);
     });
     
-    const labels = last7Days.map(date => {
-        const d = new Date(date);
-        return d.toLocaleDateString('en-US', { weekday: 'short' });
+    // Sort by count descending
+    const sortedOperations = Object.entries(operationCounts)
+        .sort((a, b) => b[1].count - a[1].count);
+    
+    // Display bottleneck operations with beautified layout
+    sortedOperations.forEach(([operation, data]) => {
+        const operationItem = document.createElement('div');
+        operationItem.className = 'performance-metric-item';
+        
+        // Get efficiency for this operation
+        const avgEfficiency = data.records.length > 0 ?
+            data.records.reduce((sum, record) => sum + (record.efficiency || 0), 0) / data.records.length : 0;
+        
+        // Get average SMV
+        const avgStandardSMV = data.records.length > 0 ?
+            data.records.reduce((sum, record) => sum + (record.standardSMV || 0), 0) / data.records.length : 0;
+        
+        // Get average working SMV
+        const avgWorkingSMV = data.records.length > 0 ?
+            data.records.reduce((sum, record) => sum + (record.workingSMV || 0), 0) / data.records.length : 0;
+        
+        operationItem.innerHTML = `
+            <div class="metric-header">
+                <div class="metric-title">${operation}</div>
+                <div class="metric-count">${data.count} occurrence${data.count > 1 ? 's' : ''}</div>
+            </div>
+            <div class="metric-details">
+                <div class="metric-row">
+                    <div class="metric-column">
+                        <span class="metric-label">Avg. Efficiency:</span>
+                        <span class="metric-value ${avgEfficiency >= 85 ? 'efficiency-high' : avgEfficiency >= 70 ? 'efficiency-medium' : 'efficiency-low'}">
+                            ${avgEfficiency.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div class="metric-column">
+                        <span class="metric-label">Std. SMV:</span>
+                        <span class="metric-value">${avgStandardSMV.toFixed(2)}</span>
+                    </div>
+                    <div class="metric-column">
+                        <span class="metric-label">Working SMV:</span>
+                        <span class="metric-value">${avgWorkingSMV.toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="metric-row">
+                    <div class="metric-column">
+                        <span class="metric-label">Lines:</span>
+                        <span class="metric-value">
+                            ${[...new Set(data.records.map(r => r.lineNo || 'N/A'))].join(', ')}
+                        </span>
+                    </div>
+                    <div class="metric-column">
+                        <span class="metric-label">Operators:</span>
+                        <span class="metric-value">
+                            ${[...new Set(data.records.map(r => r.operatorName || 'N/A'))].slice(0, 3).join(', ')}
+                            ${[...new Set(data.records.map(r => r.operatorName || 'N/A'))].length > 3 ? '...' : ''}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        bottleneckOperationsList.appendChild(operationItem);
+    });
+}
+
+// NEW: Update High Priority Card - Similar to bottleneck card
+function updateHighPriorityCard() {
+    const highPriorityLineSelect = document.getElementById('highPriorityLineSelect');
+    const highPriorityStyleSelect = document.getElementById('highPriorityStyleSelect');
+    const highPriorityOperationsList = document.getElementById('highPriorityOperationsList');
+    
+    if (!highPriorityLineSelect || !highPriorityOperationsList) return;
+    
+    const selectedLine = highPriorityLineSelect.value;
+    const selectedStyle = highPriorityStyleSelect.value;
+    
+    // Filter high priority operations (critical to quality)
+    let filteredData = performanceData.filter(record => record.criticalToQuality === 'critical');
+    
+    if (selectedLine) {
+        filteredData = filteredData.filter(record => record.lineNo === selectedLine);
+    }
+    
+    if (selectedStyle) {
+        filteredData = filteredData.filter(record => record.styleNo === selectedStyle);
+    }
+    
+    // Clear existing list
+    highPriorityOperationsList.innerHTML = '';
+    
+    if (filteredData.length === 0) {
+        highPriorityOperationsList.innerHTML = `
+            <div class="no-data-message">
+                <i class="fas fa-info-circle"></i>
+                <p>No high priority operations found${selectedLine ? ` for Line ${selectedLine}` : ''}${selectedStyle ? `, Style ${selectedStyle}` : ''}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Group by operation and count occurrences
+    const operationCounts = {};
+    filteredData.forEach(record => {
+        const operation = record.operation || 'Unknown';
+        if (!operationCounts[operation]) {
+            operationCounts[operation] = {
+                count: 0,
+                records: []
+            };
+        }
+        operationCounts[operation].count++;
+        operationCounts[operation].records.push(record);
     });
     
-    const values = last7Days.map(date => {
-        const data = dailyAverages[date];
-        return data.count > 0 ? (data.total / data.count) : 0;
-    });
+    // Sort by count descending
+    const sortedOperations = Object.entries(operationCounts)
+        .sort((a, b) => b[1].count - a[1].count);
     
-    return { labels, values };
+    // Display high priority operations with beautified layout
+    sortedOperations.forEach(([operation, data]) => {
+        const operationItem = document.createElement('div');
+        operationItem.className = 'performance-metric-item';
+        
+        // Get efficiency for this operation
+        const avgEfficiency = data.records.length > 0 ?
+            data.records.reduce((sum, record) => sum + (record.efficiency || 0), 0) / data.records.length : 0;
+        
+        // Get average SMV
+        const avgStandardSMV = data.records.length > 0 ?
+            data.records.reduce((sum, record) => sum + (record.standardSMV || 0), 0) / data.records.length : 0;
+        
+        // Get average working SMV
+        const avgWorkingSMV = data.records.length > 0 ?
+            data.records.reduce((sum, record) => sum + (record.workingSMV || 0), 0) / data.records.length : 0;
+        
+        // Check if any are also bottleneck
+        const bottleneckCount = data.records.filter(r => r.bottleneck).length;
+        
+        operationItem.innerHTML = `
+            <div class="metric-header">
+                <div class="metric-title">${operation}</div>
+                <div class="metric-count">${data.count} occurrence${data.count > 1 ? 's' : ''}</div>
+            </div>
+            <div class="metric-details">
+                <div class="metric-row">
+                    <div class="metric-column">
+                        <span class="metric-label">Avg. Efficiency:</span>
+                        <span class="metric-value ${avgEfficiency >= 85 ? 'efficiency-high' : avgEfficiency >= 70 ? 'efficiency-medium' : 'efficiency-low'}">
+                            ${avgEfficiency.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div class="metric-column">
+                        <span class="metric-label">Std. SMV:</span>
+                        <span class="metric-value">${avgStandardSMV.toFixed(2)}</span>
+                    </div>
+                    <div class="metric-column">
+                        <span class="metric-label">Working SMV:</span>
+                        <span class="metric-value">${avgWorkingSMV.toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="metric-row">
+                    <div class="metric-column">
+                        <span class="metric-label">Lines:</span>
+                        <span class="metric-value">
+                            ${[...new Set(data.records.map(r => r.lineNo || 'N/A'))].join(', ')}
+                        </span>
+                    </div>
+                    <div class="metric-column">
+                        <span class="metric-label">Bottleneck:</span>
+                        <span class="metric-value ${bottleneckCount > 0 ? 'bottleneck-yes' : 'bottleneck-no'}">
+                            ${bottleneckCount} of ${data.count}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        highPriorityOperationsList.appendChild(operationItem);
+    });
 }
 
 // Render operators table with new multi-skill logic and serial numbers
@@ -1914,7 +2240,7 @@ function renderOperatorsTable(filteredData = operators) {
     }
 }
 
-// Open Edit Existing Details Modal - UPDATED v17
+// Open Edit Existing Details Modal - UPDATED: Fixed CTQ and Bottleneck updates
 function openEditExistingDetailsModal(operatorId = null) {
     const operator = operatorId ? operators.find(op => op.operatorId === operatorId) : null;
     
@@ -2012,7 +2338,7 @@ function getSkillScoreClass(score) {
     else return 'group-d';
 }
 
-// Update statistics with new multi-skill logic
+// Update statistics - UPDATED: Removed 4 cards from operator tab
 function updateStats() {
     const selectedLine = document.getElementById('operatorsLineFilter')?.value || '';
     let filteredOperators = operators;
@@ -2021,89 +2347,27 @@ function updateStats() {
         filteredOperators = filteredOperators.filter(op => op.sewLine === selectedLine);
     }
     
-    const totalOps = filteredOperators.length;
-    
-    // Count operators by group using new multi-skill logic
-    let groupACount = 0;
-    let groupBCount = 0;
-    let groupCCount = 0;
-    let groupDCount = 0;
-    
-    filteredOperators.forEach(operator => {
-        const multiSkillGrade = calculateMultiSkillGrade(operator.operatorId);
-        
-        if (multiSkillGrade === 'Group A') groupACount++;
-        else if (multiSkillGrade === 'Group B') groupBCount++;
-        else if (multiSkillGrade === 'Group C') groupCCount++;
-        else if (multiSkillGrade === 'Group D') groupDCount++;
-    });
-    
-    if (elements.totalOperators) elements.totalOperators.textContent = totalOps;
-    if (elements.groupACount) elements.groupACount.textContent = groupACount;
-    if (elements.groupBCount) elements.groupBCount.textContent = groupBCount;
-    if (elements.groupCCount) elements.groupCCount.textContent = groupCCount;
-    if (elements.groupDCount) elements.groupDCount.textContent = groupDCount;
+    // UPDATED: Only update the operators table, removed 4 cards
+    // The table rendering is handled in renderOperatorsTable
 }
 
-// Update summary stats
+// Update summary stats - UPDATED: Removed time study summary
 function updateSummaryStats() {
     // Performance summary
     const totalRecords = performanceData.length;
     const totalEfficiency = performanceData.reduce((sum, record) => sum + (record.efficiency || 0), 0);
     const avgEfficiency = totalRecords > 0 ? (totalEfficiency / totalRecords) : 0;
     
-    if (elements.performanceRecords) elements.performanceRecords.textContent = totalRecords;
-    if (elements.performanceAvgEfficiency) elements.performanceAvgEfficiency.textContent = avgEfficiency.toFixed(1) + '%';
-    if (elements.performanceTotalOps) elements.performanceTotalOps.textContent = performanceData.length;
-    
-    // Time study summary (today)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const timeStudiesToday = performanceData.filter(record => {
-        const recordDate = new Date(record.timestamp);
-        return recordDate >= today && record.cycleTimes && record.cycleTimes.length > 0;
-    });
-    
-    let totalCycleTime = 0;
-    let completedStudies = 0;
-    
-    timeStudiesToday.forEach(study => {
-        if (study.cycleTimes && study.cycleTimes.length > 0) {
-            completedStudies++;
-            const avg = study.cycleTimes.reduce((a, b) => a + b, 0) / study.cycleTimes.length;
-            totalCycleTime += avg;
-        }
-    });
-    
-    if (elements.timeStudies) elements.timeStudies.textContent = timeStudiesToday.length;
-    if (elements.timeStudyCompleted) elements.timeStudyCompleted.textContent = completedStudies;
-    if (elements.timeStudyAvgCycle) {
-        elements.timeStudyAvgCycle.textContent = completedStudies > 0 ? (totalCycleTime / completedStudies).toFixed(1) + 's' : '0s';
-    }
+    // UPDATED: Only update performance metrics, removed time study summary
 }
 
-// Update performance statistics
+// Update performance statistics - UPDATED: Removed average efficiency card
 function updatePerformanceStats() {
-    const totalOps = performanceData.length;
-    if (totalOps === 0) {
-        if (elements.avgEfficiency) elements.avgEfficiency.textContent = '0%';
-        if (elements.avgSMV) elements.avgSMV.textContent = '0.00';
-        if (elements.avgWorkingSMV) elements.avgWorkingSMV.textContent = '0.00';
-        if (elements.totalOperations) elements.totalOperations.textContent = '0';
-        return;
-    }
-    
-    const totalEfficiency = performanceData.reduce((sum, record) => sum + (record.efficiency || 0), 0);
-    const totalStdSMV = performanceData.reduce((sum, record) => sum + (record.standardSMV || 0), 0);
-    const totalWorkingSMV = performanceData.reduce((sum, record) => sum + (record.workingSMV || 0), 0);
-    
-    if (elements.avgEfficiency) elements.avgEfficiency.textContent = (totalEfficiency / totalOps).toFixed(1) + '%';
-    if (elements.avgSMV) elements.avgSMV.textContent = (totalStdSMV / totalOps).toFixed(2);
-    if (elements.avgWorkingSMV) elements.avgWorkingSMV.textContent = (totalWorkingSMV / totalOps).toFixed(2);
-    if (elements.totalOperations) elements.totalOperations.textContent = totalOps;
+    // UPDATED: This function is no longer needed as we removed the average efficiency card
+    // Performance stats are now handled by updateDashboardStats
 }
 
-// Render performance table with edit button and serial numbers
+// Render performance table with edit button and serial numbers - UPDATED: Fixed CTQ display
 function renderPerformanceTable(filteredData = performanceData) {
     if (!elements.performanceBody) return;
     
@@ -2112,7 +2376,7 @@ function renderPerformanceTable(filteredData = performanceData) {
     if (filteredData.length === 0) {
         elements.performanceBody.innerHTML = `
             <tr>
-                <td colspan="17" style="text-align: center; padding: 50px;">
+                <td colspan="18" style="text-align: center; padding: 50px;">
                     <i class="fas fa-chart-line" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 15px; display: block;"></i>
                     <h3 style="color: var(--text-secondary); margin-bottom: 10px;">No Performance Data Found</h3>
                     <p style="color: var(--text-secondary);">Add your first performance record to get started</p>
@@ -2149,9 +2413,15 @@ function renderPerformanceTable(filteredData = performanceData) {
         }
         
         // Format CTQ/Bottleneck
-        const ctqDisplay = record.criticalToQuality === 'critical' ? 'Critical' : 
-                          record.criticalToQuality === 'not-critical' ? 'Not Critical' : '-';
-        const bottleneckDisplay = record.bottleneck ? 'Yes' : 'No';
+        const ctqDisplay = record.criticalToQuality === 'critical' ? 
+            '<span class="ctq-badge critical">Critical</span>' : 
+            record.criticalToQuality === 'not-critical' ? 
+            '<span class="ctq-badge not-critical">Not Critical</span>' : 
+            '-';
+        
+        const bottleneckDisplay = record.bottleneck ? 
+            '<span class="bottleneck-badge yes">Yes</span>' : 
+            '<span class="bottleneck-badge no">No</span>';
         
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -2174,7 +2444,8 @@ function renderPerformanceTable(filteredData = performanceData) {
             <td class="${efficiencyClass}">${efficiency ? efficiency.toFixed(1) + '%' : '-'}</td>
             <td>${otherMachineEfficiencyDisplay}</td>
             <td>${record.operationGrade || '-'}</td>
-            <td>${ctqDisplay}${record.bottleneck ? ' (Bottleneck)' : ''}</td>
+            <td>${ctqDisplay}</td>
+            <td>${bottleneckDisplay}</td>
             <td>
                 <div class="action-buttons-small">
                     <button class="btn-icon delete-perf-btn" data-id="${record.id}" title="Delete Record">
@@ -2214,7 +2485,7 @@ function renderPerformanceTable(filteredData = performanceData) {
     });
 }
 
-// Open edit performance modal - UPDATED v17
+// Open edit performance modal - UPDATED: Fixed CTQ dropdown and bottleneck checkbox
 function openEditPerformanceModal(recordId) {
     const record = performanceData.find(r => r.id === recordId);
     if (!record) return;
@@ -2225,6 +2496,17 @@ function openEditPerformanceModal(recordId) {
     document.getElementById('editRecordWorkingSMV').value = record.workingSMV || 0;
     document.getElementById('editRecordOperationGrade').value = record.operationGrade || '';
     document.getElementById('editRecordCycleTimes').value = record.cycleTimes ? record.cycleTimes.join(', ') : '';
+    
+    // UPDATED: Set CTQ dropdown and Bottleneck checkbox
+    const ctqDropdown = document.getElementById('editRecordCTQ');
+    if (ctqDropdown && record.criticalToQuality) {
+        ctqDropdown.value = record.criticalToQuality;
+    }
+    
+    const bottleneckCheckbox = document.getElementById('editRecordBottleneck');
+    if (bottleneckCheckbox) {
+        bottleneckCheckbox.checked = record.bottleneck || false;
+    }
     
     document.getElementById('editPerformanceModal').classList.add('active');
 }
@@ -2458,7 +2740,7 @@ async function deleteOperator(operatorId) {
     }
 }
 
-// Reset time study form
+// Reset time study form - UPDATED: Replaced CTQ radio buttons with dropdown
 function resetTimeStudyForm() {
     // Don't clear line number, style, and product desc
     // Let them be auto-filled when user enters line number
@@ -2479,15 +2761,17 @@ function resetTimeStudyForm() {
     const operationGrade = document.getElementById('operationGrade');
     if (operationGrade) operationGrade.value = '';
     
-    // Reset CTQ radio buttons
-    const ctqRadios = document.querySelectorAll('input[name="ctq"]');
-    ctqRadios.forEach(radio => radio.checked = false);
+    // UPDATED: Reset CTQ dropdown
+    const ctqDropdown = document.getElementById('studyCTQ');
+    if (ctqDropdown) {
+        ctqDropdown.value = '';
+    }
     
-    // Reset bottleneck checkbox
+    // UPDATED: Reset bottleneck checkbox
     const bottleneckCheckbox = document.getElementById('bottleneckCheckbox');
     if (bottleneckCheckbox) {
+        bottleneckCheckbox.parentElement.style.display = 'block';
         bottleneckCheckbox.checked = false;
-        bottleneckCheckbox.parentElement.style.display = 'none';
     }
     
     // Reset stopwatch
@@ -2504,6 +2788,17 @@ function resetTimeStudyForm() {
     if (elements.allowanceInfo) {
         elements.allowanceInfo.style.display = 'none';
     }
+    
+    // Reset other machines selection
+    const selectedOtherMachines = document.getElementById('selectedOtherMachines');
+    if (selectedOtherMachines) {
+        selectedOtherMachines.innerHTML = '';
+    }
+    
+    // Uncheck all other machine checkboxes
+    document.querySelectorAll('#otherMachinesOptions input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
 }
 
 // Show toast notification
@@ -2906,7 +3201,7 @@ function setupManualCycleInputs(count) {
     }
 }
 
-// Save performance data from time study WITH GENERAL ALLOWANCE and v17 features
+// Save performance data from time study WITH GENERAL ALLOWANCE - UPDATED: CTQ dropdown
 async function saveTimeStudyData() {
     try {
         const operatorId = document.getElementById('studyOperatorId')?.value;
@@ -2937,9 +3232,10 @@ async function saveTimeStudyData() {
         // Get operation complexity grade
         const operationGrade = document.getElementById('operationGrade')?.value || '';
         
-        // Get CTQ and Bottleneck
-        const ctqRadio = document.querySelector('input[name="ctq"]:checked');
-        const criticalToQuality = ctqRadio ? ctqRadio.value : '';
+        // UPDATED: Get CTQ from dropdown and Bottleneck from checkbox
+        const ctqDropdown = document.getElementById('studyCTQ');
+        const criticalToQuality = ctqDropdown ? ctqDropdown.value : '';
+        
         const bottleneckCheckbox = document.getElementById('bottleneckCheckbox');
         const bottleneck = bottleneckCheckbox ? bottleneckCheckbox.checked : false;
         
@@ -3008,7 +3304,7 @@ async function saveTimeStudyData() {
     }
 }
 
-// Update performance record with general allowance and v17 features
+// Update performance record with general allowance - UPDATED: CTQ dropdown
 async function updatePerformanceRecord(recordId, formData) {
     try {
         const recordRef = doc(db, 'performance', recordId);
@@ -3036,6 +3332,8 @@ async function updatePerformanceRecord(recordId, formData) {
             workingSMV: workingSMV,
             efficiency: efficiency,
             operationGrade: formData.operationGrade,
+            criticalToQuality: formData.criticalToQuality,
+            bottleneck: formData.bottleneck,
             cycleTimes: cycleTimes,
             avgCycleTime: avgTime,
             allowance: GENERAL_ALLOWANCE,
@@ -3062,12 +3360,12 @@ async function deletePerformanceRecord(id) {
     }
 }
 
-// Setup event listeners for v17
+// Setup event listeners for V22
 function setupEventListeners() {
     // Setup mobile menu
     setupMobileMenu();
     
-    // Dashboard Tab - UPDATED v17
+    // Dashboard Tab - UPDATED: Added high priority card refresh
     const dashboardLineSelect = document.getElementById('dashboardLineSelect');
     if (dashboardLineSelect) {
         dashboardLineSelect.addEventListener('change', () => {
@@ -3078,6 +3376,7 @@ function setupEventListeners() {
     const timeStudiesLineSelect = document.getElementById('timeStudiesLineSelect');
     if (timeStudiesLineSelect) {
         timeStudiesLineSelect.addEventListener('change', () => {
+            updateTimeStudiesCountForLine(timeStudiesLineSelect.value);
             updateDashboard();
         });
     }
@@ -3094,6 +3393,24 @@ function setupEventListeners() {
         refreshDashboardBtn.addEventListener('click', () => {
             updateDashboard();
             showToast('Dashboard refreshed!');
+        });
+    }
+    
+    // Bottleneck card refresh button
+    const refreshBottleneckBtn = document.getElementById('refreshBottleneckBtn');
+    if (refreshBottleneckBtn) {
+        refreshBottleneckBtn.addEventListener('click', () => {
+            updateBottleneckCard();
+            showToast('Bottleneck card refreshed!');
+        });
+    }
+    
+    // NEW: High priority card refresh button
+    const refreshHighPriorityBtn = document.getElementById('refreshHighPriorityBtn');
+    if (refreshHighPriorityBtn) {
+        refreshHighPriorityBtn.addEventListener('click', () => {
+            updateHighPriorityCard();
+            showToast('High priority card refreshed!');
         });
     }
     
@@ -3131,7 +3448,7 @@ function setupEventListeners() {
         });
     }
     
-    // Performance Tab
+    // Performance Tab - UPDATED: Removed machine usage stats
     const searchPerformance = document.getElementById('searchPerformance');
     if (searchPerformance) {
         searchPerformance.addEventListener('input', filterPerformanceData);
@@ -3423,16 +3740,19 @@ function setupEventListeners() {
         });
     }
 
-    // Edit performance form with general allowance
+    // Edit performance form with general allowance - UPDATED: CTQ dropdown
     const editPerformanceForm = document.getElementById('editPerformanceForm');
     if (editPerformanceForm) {
         editPerformanceForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const recordId = document.getElementById('editRecordId').textContent;
+            const ctqDropdown = document.getElementById('editRecordCTQ');
             const formData = {
                 standardSMV: parseFloat(document.getElementById('editRecordStdSMV').value),
                 workingSMV: parseFloat(document.getElementById('editRecordWorkingSMV').value),
                 operationGrade: document.getElementById('editRecordOperationGrade').value,
+                criticalToQuality: ctqDropdown ? ctqDropdown.value : '',
+                bottleneck: document.getElementById('editRecordBottleneck').checked,
                 cycleTimes: document.getElementById('editRecordCycleTimes').value
             };
             
@@ -3491,25 +3811,31 @@ function setupEventListeners() {
         }
     });
     
-    // CTQ radio button event listener for bottleneck checkbox
-    document.querySelectorAll('input[name="ctq"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const bottleneckContainer = document.getElementById('bottleneckContainer');
-            if (bottleneckContainer) {
-                if (e.target.value === 'critical') {
-                    bottleneckContainer.style.display = 'block';
-                } else {
-                    bottleneckContainer.style.display = 'none';
-                    const bottleneckCheckbox = document.getElementById('bottleneckCheckbox');
-                    if (bottleneckCheckbox) {
-                        bottleneckCheckbox.checked = false;
-                    }
-                }
-            }
-        });
-    });
+    // UPDATED: CTQ dropdown is always visible
+    const timeStudyCTQContainer = document.getElementById('ctqContainer');
+    const perfCTQContainer = document.getElementById('perfCTQContainer');
     
-    // Edit Existing Details Modal functionality
+    if (timeStudyCTQContainer) {
+        timeStudyCTQContainer.style.display = 'block';
+    }
+    
+    if (perfCTQContainer) {
+        perfCTQContainer.style.display = 'block';
+    }
+    
+    // Bottleneck checkbox is always visible
+    const timeStudyBottleneckContainer = document.getElementById('bottleneckContainer');
+    const perfBottleneckContainer = document.getElementById('perfBottleneckContainer');
+    
+    if (timeStudyBottleneckContainer) {
+        timeStudyBottleneckContainer.style.display = 'block';
+    }
+    
+    if (perfBottleneckContainer) {
+        perfBottleneckContainer.style.display = 'block';
+    }
+    
+    // Edit Existing Details Modal functionality - UPDATED: Fixed CTQ and Bottleneck
     const editExistingOperatorSelect = document.getElementById('editExistingOperatorSelect');
     if (editExistingOperatorSelect) {
         editExistingOperatorSelect.addEventListener('change', function() {
@@ -3537,8 +3863,69 @@ function setupEventListeners() {
                             recordSelect.appendChild(option);
                         });
                     }
+                    
+                    // Load all other machines for this operator
+                    loadOtherMachinesForOperator(operatorId);
                 }
             }
+        });
+    }
+    
+    // Load all other machines for operator
+    function loadOtherMachinesForOperator(operatorId) {
+        const otherMachinesContainer = document.getElementById('otherMachinesContainer');
+        if (!otherMachinesContainer) return;
+        
+        // Clear existing machines
+        otherMachinesContainer.innerHTML = '';
+        
+        // Get all performance records for this operator
+        const operatorRecords = performanceData.filter(record => record.operatorId === operatorId);
+        
+        // Collect unique other machines from all records
+        const allOtherMachines = new Set();
+        const machineEfficiencies = {};
+        
+        operatorRecords.forEach(record => {
+            if (record.otherMachines) {
+                const machines = record.otherMachines.split(', ');
+                const efficiencies = record.otherMachineEfficiencies || {};
+                
+                machines.forEach(machine => {
+                    if (machine.trim()) {
+                        allOtherMachines.add(machine.trim());
+                        if (efficiencies[machine.trim()] && !machineEfficiencies[machine.trim()]) {
+                            machineEfficiencies[machine.trim()] = efficiencies[machine.trim()];
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Add each machine as an input
+        allOtherMachines.forEach(machine => {
+            const machineItem = document.createElement('div');
+            machineItem.className = 'other-machine-item';
+            machineItem.innerHTML = `
+                <div style="flex: 2;">
+                    <input type="text" class="other-machine-name" value="${machine}" readonly>
+                </div>
+                <div style="flex: 1;">
+                    <input type="number" class="other-machine-efficiency" min="0" max="200" step="0.1" 
+                           value="${machineEfficiencies[machine] || ''}" placeholder="Efficiency %">
+                </div>
+                <div>
+                    <button type="button" class="btn-icon remove-other-machine" title="Remove">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            otherMachinesContainer.appendChild(machineItem);
+            
+            // Add remove event listener
+            machineItem.querySelector('.remove-other-machine').addEventListener('click', () => {
+                machineItem.remove();
+            });
         });
     }
     
@@ -3557,6 +3944,17 @@ function setupEventListeners() {
                     document.getElementById('editExistingEfficiency').value = record.efficiency || '';
                     document.getElementById('editExistingOperationGrade').value = record.operationGrade || '';
                     
+                    // UPDATED: Set CTQ dropdown and Bottleneck checkbox
+                    const ctqDropdown = document.getElementById('editExistingCTQ');
+                    if (ctqDropdown && record.criticalToQuality) {
+                        ctqDropdown.value = record.criticalToQuality;
+                    }
+                    
+                    const bottleneckCheckbox = document.getElementById('editExistingBottleneck');
+                    if (bottleneckCheckbox) {
+                        bottleneckCheckbox.checked = record.bottleneck || false;
+                    }
+                    
                     // Show/hide custom machine row
                     const customMachineRow = document.getElementById('editExistingCustomMachineRow');
                     if (customMachineRow) {
@@ -3568,25 +3966,19 @@ function setupEventListeners() {
                         }
                     }
                     
-                    // Populate existing other machines
-                    const existingOtherMachinesList = document.getElementById('existingOtherMachinesList');
-                    if (existingOtherMachinesList) {
-                        existingOtherMachinesList.innerHTML = '';
-                        if (record.otherMachines) {
-                            const otherMachines = record.otherMachines.split(', ');
-                            const efficiencies = record.otherMachineEfficiencies || {};
+                    // Populate other machine efficiencies for this specific record
+                    if (record.otherMachineEfficiencies) {
+                        document.querySelectorAll('#otherMachinesContainer .other-machine-item').forEach(item => {
+                            const machineNameInput = item.querySelector('.other-machine-name');
+                            const efficiencyInput = item.querySelector('.other-machine-efficiency');
                             
-                            otherMachines.forEach(machine => {
-                                const efficiency = efficiencies[machine] || 0;
-                                const machineItem = document.createElement('div');
-                                machineItem.className = 'existing-other-machine-item';
-                                machineItem.innerHTML = `
-                                    <div>${machine}</div>
-                                    <div>${efficiency.toFixed(1)}%</div>
-                                `;
-                                existingOtherMachinesList.appendChild(machineItem);
-                            });
-                        }
+                            if (machineNameInput && efficiencyInput) {
+                                const machineName = machineNameInput.value;
+                                if (record.otherMachineEfficiencies[machineName]) {
+                                    efficiencyInput.value = record.otherMachineEfficiencies[machineName];
+                                }
+                            }
+                        });
                     }
                 }
             }
@@ -3633,7 +4025,7 @@ function setupEventListeners() {
         });
     }
     
-    // Save existing details button
+    // Save existing details button - UPDATED: Fixed CTQ and Bottleneck
     const saveExistingDetailsBtn = document.getElementById('saveExistingDetailsBtn');
     if (saveExistingDetailsBtn) {
         saveExistingDetailsBtn.addEventListener('click', async () => {
@@ -3645,6 +4037,8 @@ function setupEventListeners() {
             
             try {
                 const recordRef = doc(db, 'performance', recordId);
+                const ctqDropdown = document.getElementById('editExistingCTQ');
+                
                 const updates = {
                     operation: document.getElementById('editExistingOperation').value,
                     machineName: document.getElementById('editExistingMachine').value,
@@ -3652,6 +4046,8 @@ function setupEventListeners() {
                     workingSMV: parseFloat(document.getElementById('editExistingWorkingSMV').value) || 0,
                     efficiency: parseFloat(document.getElementById('editExistingEfficiency').value) || 0,
                     operationGrade: document.getElementById('editExistingOperationGrade').value,
+                    criticalToQuality: ctqDropdown ? ctqDropdown.value : '',
+                    bottleneck: document.getElementById('editExistingBottleneck').checked || false,
                     lastUpdated: serverTimestamp()
                 };
                 
@@ -3666,11 +4062,11 @@ function setupEventListeners() {
                 const otherMachineEfficiencies = {};
                 
                 otherMachineItems.forEach(item => {
-                    const machineSelect = item.querySelector('.other-machine-select');
+                    const machineNameInput = item.querySelector('.other-machine-name');
                     const efficiencyInput = item.querySelector('.other-machine-efficiency');
                     
-                    if (machineSelect && machineSelect.value && efficiencyInput && efficiencyInput.value) {
-                        const machine = machineSelect.value;
+                    if (machineNameInput && machineNameInput.value && efficiencyInput && efficiencyInput.value) {
+                        const machine = machineNameInput.value;
                         const efficiency = parseFloat(efficiencyInput.value) || 0;
                         otherMachines.push(machine);
                         otherMachineEfficiencies[machine] = efficiency;
