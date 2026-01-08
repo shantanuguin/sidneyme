@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sidney Apparels - Operator Performance System v17</title>
+    <title>Sidney Apparels - Operator Performance System v22</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -16,7 +16,7 @@
         <div class="loading-spinner"></div>
         <div class="loading-text">LOADING SYSTEM DATA</div>
         <div style="margin-top: 25px; text-align: center; max-width: 500px; padding: 0 20px;">
-            <h3 style="color: var(--text-primary); margin-bottom: 15px;">Sidney Apparels OPS v17.0</h3>
+            <h3 style="color: var(--text-primary); margin-bottom: 15px;">Sidney Apparels OPS v22.0</h3>
             <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6;">
                 Welcome to the Operator Performance System. Track operator efficiency, conduct time studies, 
                 and analyze manufacturing performance.
@@ -85,7 +85,7 @@
                         <i class="fas fa-database"></i>
                         <div class="info-item-content">
                             <div class="info-label">DATA VERSION</div>
-                            <div class="info-value">v17.0</div>
+                            <div class="info-value">v22.0</div>
                         </div>
                     </div>
                     <div class="info-item">
@@ -121,7 +121,7 @@
             </div>
         </header>
 
-        <!-- Dashboard Tab - UPDATED v17 -->
+        <!-- Dashboard Tab - UPDATED v22 -->
         <div id="dashboard" class="tab-content active">
             <div class="controls-panel">
                 <div class="search-filter">
@@ -150,26 +150,33 @@
 
             <!-- Dashboard Scrollable Container -->
             <div class="dashboard-scrollable">
-                <!-- UPDATED v17: New Dashboard Grid -->
-                <div class="dashboard-grid-v11">
-                    <!-- Total Operators Card - UPDATED: Not clickable, line selection -->
-                    <div class="dashboard-card total-operators-card" id="dashboardTotalOperatorsCard">
-                        <h3><i class="fas fa-users"></i> Total Operators</h3>
-                        <div style="display: flex; align-items: center; gap: 20px;">
-                            <div style="flex: 1;">
-                                <div style="font-size: 3rem; font-weight: 700; margin-bottom: 10px; color: var(--primary-color);" id="dashboardTotalOperators">0</div>
-                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Active Operators</div>
+                <!-- UPDATED v22: New Dashboard Grid with correct sequence -->
+                <div class="dashboard-grid-v22">
+                    <!-- Performance Metrics Card -->
+                    <div class="dashboard-card">
+                        <h3><i class="fas fa-chart-line"></i> Performance Metrics</h3>
+                        <div class="metrics-grid">
+                            <div class="metric-item efficiency">
+                                <div class="value" id="dashboardAvgEfficiency">0%</div>
+                                <div class="label">Avg Efficiency</div>
+                            </div>
+                            <div class="metric-item smv">
+                                <div class="value" id="dashboardAvgSMV">0.00</div>
+                                <div class="label">Avg SMV</div>
+                            </div>
+                            <div class="metric-item working-smv">
+                                <div class="value" id="dashboardAvgWorkingSMV">0.00</div>
+                                <div class="label">Avg Working SMV</div>
+                            </div>
+                            <div class="metric-item operations">
+                                <div class="value" id="dashboardTotalOperations">0</div>
+                                <div class="label">Total Operations</div>
                             </div>
                         </div>
-                        <div class="line-selector">
-                            <select id="dashboardLineSelect">
-                                <option value="">All Lines</option>
-                            </select>
-                        </div>
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
-                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
-                                Select line to view operator count
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                <span style="color: var(--text-secondary);">Active Lines:</span>
+                                <span style="font-weight: 600; color: var(--primary-color);" id="dashboardActiveLines">0</span>
                             </div>
                         </div>
                     </div>
@@ -207,36 +214,29 @@
                         </div>
                     </div>
 
-                    <!-- Performance Metrics Card -->
-                    <div class="dashboard-card">
-                        <h3><i class="fas fa-chart-line"></i> Performance Metrics</h3>
-                        <div class="metrics-grid">
-                            <div class="metric-item efficiency">
-                                <div class="value" id="dashboardAvgEfficiency">0%</div>
-                                <div class="label">Avg Efficiency</div>
-                            </div>
-                            <div class="metric-item smv">
-                                <div class="value" id="dashboardAvgSMV">0.00</div>
-                                <div class="label">Avg SMV</div>
-                            </div>
-                            <div class="metric-item working-smv">
-                                <div class="value" id="dashboardAvgWorkingSMV">0.00</div>
-                                <div class="label">Avg Working SMV</div>
-                            </div>
-                            <div class="metric-item operations">
-                                <div class="value" id="dashboardTotalOperations">0</div>
-                                <div class="label">Total Operations</div>
+                    <!-- Total Operators Card -->
+                    <div class="dashboard-card total-operators-card" id="dashboardTotalOperatorsCard">
+                        <h3><i class="fas fa-users"></i> Total Operators</h3>
+                        <div style="display: flex; align-items: center; gap: 20px;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 3rem; font-weight: 700; margin-bottom: 10px; color: var(--primary-color);" id="dashboardTotalOperators">0</div>
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">Active Operators</div>
                             </div>
                         </div>
-                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                                <span style="color: var(--text-secondary);">Active Lines:</span>
-                                <span style="font-weight: 600; color: var(--primary-color);" id="dashboardActiveLines">0</span>
+                        <div class="line-selector">
+                            <select id="dashboardLineSelect">
+                                <option value="">All Lines</option>
+                            </select>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+                                Select line to view operator count
                             </div>
                         </div>
                     </div>
 
-                    <!-- UPDATED v17: Smaller Garment SMV Cards -->
+                    <!-- Garment Standard SMV Card -->
                     <div class="garment-smv-card standard compact">
                         <h3><i class="fas fa-ruler"></i> Garment Standard SMV</h3>
                         <div class="garment-smv-selectors">
@@ -251,6 +251,7 @@
                         <div class="garment-smv-label">Total Standard SMV (minutes)</div>
                     </div>
 
+                    <!-- Garment Working SMV Card -->
                     <div class="garment-smv-card working compact">
                         <h3><i class="fas fa-ruler-combined"></i> Garment Working SMV</h3>
                         <div class="garment-smv-selectors">
@@ -265,24 +266,7 @@
                         <div class="garment-smv-label">Total Working SMV (minutes)</div>
                     </div>
 
-                    <!-- UPDATED v17: Machine Usage Statistics Card -->
-                    <div class="dashboard-card machine-usage-card">
-                        <h3><i class="fas fa-cogs"></i> Machine Usage Statistics</h3>
-                        <div class="machine-usage-stats" id="dashboardMachineUsage">
-                            <div class="machine-usage-item">
-                                <span class="machine-name">Loading...</span>
-                                <span class="machine-count">0</span>
-                            </div>
-                        </div>
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
-                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
-                                Unique machines used by operators
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- UPDATED v17: Time Studies Count Card -->
+                    <!-- Time Studies Count Card -->
                     <div class="dashboard-card time-studies-card">
                         <h3><i class="fas fa-stopwatch"></i> Time Studies Completed</h3>
                         <div style="display: flex; align-items: center; gap: 20px;">
@@ -303,17 +287,102 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- UPDATED v22: Machine Usage Statistics Card with text wrapping -->
+                    <div class="dashboard-card machine-usage-card">
+                        <h3><i class="fas fa-cogs"></i> Machine Usage Statistics</h3>
+                        <div class="machine-usage-stats with-text-wrap" id="dashboardMachineUsage">
+                            <div class="machine-usage-item">
+                                <span class="machine-name">Loading...</span>
+                                <span class="machine-count">0</span>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+                                Unique machines used by operators (count ≥ 1)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UPDATED v22: Bottleneck Operations Card with improved design -->
+                    <div class="dashboard-card bottleneck-operations-card enhanced">
+                        <div class="card-header-with-filters">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Bottleneck Operations</h3>
+                            <div class="inline-filters">
+                                <select id="bottleneckLineSelect" class="pretty-select">
+                                    <option value="">All Lines</option>
+                                </select>
+                                <select id="bottleneckStyleSelect" class="pretty-select">
+                                    <option value="">All Styles</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="bottleneck-metrics">
+                            <div class="metric-display">
+                                <div class="metric-value" id="bottleneckCount">0</div>
+                                <div class="metric-label">Total Bottleneck Ops</div>
+                            </div>
+                            <div class="metric-display">
+                                <div class="metric-value" id="bottleneckAvgEff">0%</div>
+                                <div class="metric-label">Avg Efficiency</div>
+                            </div>
+                        </div>
+                        <div class="bottleneck-list" id="bottleneckList">
+                            <div class="no-data">Select filters to view bottleneck operations</div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+                                Operations slowing down production for selected line/style
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UPDATED v22: High Priority Operations Card with improved design -->
+                    <div class="dashboard-card high-priority-card enhanced">
+                        <div class="card-header-with-filters">
+                            <h3><i class="fas fa-exclamation-circle"></i> High Priority Operations</h3>
+                            <div class="inline-filters">
+                                <select id="priorityLineSelect" class="pretty-select">
+                                    <option value="">All Lines</option>
+                                </select>
+                                <select id="priorityStyleSelect" class="pretty-select">
+                                    <option value="">All Styles</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="priority-metrics">
+                            <div class="metric-display critical">
+                                <div class="metric-value" id="criticalOperationsCount">0</div>
+                                <div class="metric-label">Critical to Quality</div>
+                            </div>
+                            <div class="metric-display bottleneck">
+                                <div class="metric-value" id="highPriorityBottleneckCount">0</div>
+                                <div class="metric-label">Bottleneck Ops</div>
+                            </div>
+                            <div class="metric-display both">
+                                <div class="metric-value" id="criticalBottleneckCount">0</div>
+                                <div class="metric-label">Both Critical & Bottleneck</div>
+                            </div>
+                        </div>
+                        <div class="priority-list" id="priorityList">
+                            <div class="no-data">Select filters to view high priority operations</div>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                            <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                <i class="fas fa-info-circle" style="color: var(--primary-color);"></i>
+                                Operations requiring immediate attention
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Charts Section -->
+                <!-- Charts Section - UPDATED v22: Removed Weekly Performance Trend -->
                 <div class="analysis-charts">
                     <div class="chart-card">
                         <h4><i class="fas fa-chart-pie"></i> Efficiency Distribution</h4>
                         <canvas id="efficiencyChart" height="250"></canvas>
-                    </div>
-                    <div class="chart-card">
-                        <h4><i class="fas fa-trend-up"></i> Weekly Performance Trend</h4>
-                        <canvas id="weeklyTrendChart" height="250"></canvas>
                     </div>
                     <div class="chart-card">
                         <h4><i class="fas fa-industry"></i> Line Performance</h4>
@@ -327,110 +396,8 @@
             </div>
         </div>
 
-        <!-- Operators Tab - UPDATED v17 with Serial Numbers -->
+        <!-- Operators Tab - UPDATED v22: Removed the 4 cards -->
         <div id="operators" class="tab-content">
-            <!-- Compact Statistics Dashboard -->
-            <div class="stats-dashboard compact-stats">
-                <div class="stat-card glow">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="stat-change">
-                            <i class="fas fa-arrow-up"></i>
-                            12%
-                        </div>
-                    </div>
-                    <div class="stat-content">
-                        <h3 id="totalOperators">0</h3>
-                        <p>Total Operators</p>
-                        <div class="operator-distribution">
-                            <div class="distribution-item group-a" id="operatorsGroupAClickable">
-                                <div class="count" id="operatorsGroupACount">0</div>
-                                <div class="label">Group A</div>
-                            </div>
-                            <div class="distribution-item group-b" id="operatorsGroupBClickable">
-                                <div class="count" id="operatorsGroupBCount">0</div>
-                                <div class="label">Group B</div>
-                            </div>
-                            <div class="distribution-item group-c" id="operatorsGroupCClickable">
-                                <div class="count" id="operatorsGroupCCount">0</div>
-                                <div class="label">Group C</div>
-                            </div>
-                            <div class="distribution-item group-d" id="operatorsGroupDClickable">
-                                <div class="count" id="operatorsGroupDCount">0</div>
-                                <div class="label">Group D</div>
-                            </div>
-                        </div>
-                        <div class="line-selector">
-                            <select id="operatorsLineFilter">
-                                <option value="">All Lines</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Performance Summary Card -->
-                <div class="stat-card clickable" data-tab="performance">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="stat-change">
-                            <i class="fas fa-external-link-alt"></i>
-                        </div>
-                    </div>
-                    <div class="stat-content">
-                        <h3 id="performanceRecords">0</h3>
-                        <p>Performance Records</p>
-                        <div style="margin-top: 12px; color: var(--text-secondary); font-size: 0.9rem;">
-                            <div>Avg Efficiency: <span id="performanceAvgEfficiency" style="color: var(--success-color); font-weight: 600;">0%</span></div>
-                            <div>Total Operations: <span id="performanceTotalOps" style="color: var(--primary-color); font-weight: 600;">0</span></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Time Study Summary Card -->
-                <div class="stat-card clickable" data-tab="time-study">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-stopwatch"></i>
-                        </div>
-                        <div class="stat-change">
-                            <i class="fas fa-external-link-alt"></i>
-                        </div>
-                    </div>
-                    <div class="stat-content">
-                        <h3 id="timeStudies">0</h3>
-                        <p>Time Studies Today</p>
-                        <div style="margin-top: 12px; color: var(--text-secondary); font-size: 0.9rem;">
-                            <div>Avg Cycle Time: <span id="timeStudyAvgCycle" style="color: var(--warning-color); font-weight: 600;">0s</span></div>
-                            <div>Completed: <span id="timeStudyCompleted" style="color: var(--success-color); font-weight: 600;">0</span></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Analysis Summary Card -->
-                <div class="stat-card clickable" data-tab="dashboard">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-dashboard"></i>
-                        </div>
-                        <div class="stat-change">
-                            <i class="fas fa-external-link-alt"></i>
-                        </div>
-                    </div>
-                    <div class="stat-content">
-                        <h3 id="analysisSummary">0</h3>
-                        <p>Dashboard Insights</p>
-                        <div style="margin-top: 12px; color: var(--text-secondary); font-size: 0.9rem;">
-                            <div>Active Lines: <span id="activeLines" style="color: var(--primary-color); font-weight: 600;">0</span></div>
-                            <div>Avg SMV Diff: <span id="avgSMVDiff" style="color: var(--accent-color); font-weight: 600;">0%</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="controls-panel">
                 <div class="search-filter">
                     <div class="search-box">
@@ -491,29 +458,10 @@
             </div>
         </div>
 
-        <!-- Performance Data Tab - UPDATED v17 with Serial Numbers -->
+        <!-- Performance Data Tab - UPDATED v22: Removed average efficiency and machine usage cards -->
         <div id="performance" class="tab-content">
-            <!-- Statistics Dashboard with 3 cards -->
+            <!-- Statistics Dashboard with only Combined SMV Card -->
             <div class="stats-dashboard">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-bolt"></i>
-                        </div>
-                        <div class="stat-change">
-                            <i class="fas fa-arrow-up"></i>
-                            5%
-                        </div>
-                    </div>
-                    <div class="stat-content">
-                        <h3 id="avgEfficiency">0%</h3>
-                        <p>Average Efficiency</p>
-                        <div style="margin-top: 12px; color: var(--text-secondary); font-size: 0.9rem;">
-                            <div>Total Operations: <span id="totalOperations" style="color: var(--primary-color); font-weight: 600;">0</span></div>
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Combined SMV Card -->
                 <div class="stat-card combined-smv-card">
                     <div class="stat-header">
@@ -534,24 +482,6 @@
                             <div class="smv-value working">
                                 <div class="value" id="avgWorkingSMV">0.00</div>
                                 <div class="label">Avg. Working</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Machine Usage Statistics Card -->
-                <div class="stat-card machine-usage-card">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-cogs"></i>
-                        </div>
-                    </div>
-                    <div class="stat-content">
-                        <p>Machine Usage Statistics</p>
-                        <div class="machine-usage-stats" id="machineUsageStats">
-                            <div class="machine-usage-item">
-                                <span class="machine-name">No data available</span>
-                                <span class="machine-count">0</span>
                             </div>
                         </div>
                     </div>
@@ -609,7 +539,9 @@
                                 <th>Efficiency</th>
                                 <th>Other Machine Efficiency</th>
                                 <th>Operation Grade</th>
-                                <th>CTQ/Bottleneck</th>
+                                <!-- UPDATED v22: Combined CTQ and Bottleneck -->
+                                <th>Critical to Quality</th>
+                                <th>Bottleneck</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -620,7 +552,7 @@
             </div>
         </div>
 
-        <!-- Time Study Tab - UPDATED v17 with Pause Button and Operation Complexity Grade -->
+        <!-- Time Study Tab - UPDATED v22: Replaced radio buttons with dropdown for CTQ -->
         <div id="time-study" class="tab-content">
             <div class="stopwatch-container">
                 <h3><i class="fas fa-stopwatch"></i> Time Study & SAM Calculation</h3>
@@ -762,33 +694,37 @@
                     </div>
                 </div>
 
-                <!-- NEW: Critical to Quality Radio Buttons and Bottleneck Checkbox -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Critical to Quality *</label>
-                        <div class="radio-group">
-                            <label class="radio-label">
-                                <input type="radio" name="ctq" value="critical" required>
-                                <span class="radio-custom"></span>
-                                Critical to Quality
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="ctq" value="not-critical" required>
-                                <span class="radio-custom"></span>
-                                Not Critical
-                            </label>
+                <!-- UPDATED v22: Replaced radio buttons with dropdown for Critical to Quality -->
+                <h4 style="margin-top: 20px; margin-bottom: 15px; color: var(--text-primary);">
+                    <i class="fas fa-exclamation-circle"></i> Critical to Quality & Bottleneck Settings
+                </h4>
+                
+                <div class="form-row" style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="ctqDropdown" style="font-weight: 600; color: var(--primary-color); margin-bottom: 10px;">Critical to Quality *</label>
+                        <select id="ctqDropdown" style="width: 100%; padding: 12px 15px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-primary); font-size: 1rem;">
+                            <option value="">Select CTQ Status</option>
+                            <option value="critical">Critical to Quality</option>
+                            <option value="not-critical">Not Critical</option>
+                        </select>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">
+                            <i class="fas fa-info-circle"></i> Critical operations affect product quality directly
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="checkbox-label" id="bottleneckContainer" style="display: none;">
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label class="checkbox-label" style="background: rgba(255, 255, 255, 0.05); padding: 12px 20px; border-radius: 8px; display: block;">
                             <input type="checkbox" id="bottleneckCheckbox">
                             <span class="checkbox-custom"></span>
-                            Bottleneck Operation
+                            <span style="font-weight: 600; color: var(--warning-color);">Bottleneck Operation</span>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">
+                                Check if this operation slows down the production line
+                            </div>
                         </label>
                     </div>
                 </div>
                 
-                <!-- Allowance Information Display - UPDATED v17: General allowance 16.67% -->
+                <!-- Allowance Information Display -->
                 <div class="edit-info" id="allowanceInfo" style="margin-top: 15px;">
                     <h4 style="color: var(--primary-color); margin-bottom: 10px;"><i class="fas fa-calculator"></i> Allowance Breakdown</h4>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
@@ -904,7 +840,7 @@
             </div>
         </div>
 
-        <!-- Grading Criteria Tab - UPDATED v17 with Operation Complexity Criteria -->
+        <!-- Grading Criteria Tab -->
         <div id="grading-criteria" class="tab-content">
             <div class="grading-criteria-content">
                 <div class="criteria-section">
@@ -1008,7 +944,7 @@
                     </div>
                 </div>
                 
-                <!-- NEW: Operation Complexity Criteria Section -->
+                <!-- Operation Complexity Criteria Section -->
                 <div class="criteria-section">
                     <h3><i class="fas fa-layer-group"></i> Operation Complexity Grades</h3>
                     <div class="criteria-grid">
@@ -1264,11 +1200,11 @@
         <!-- Footer -->
         <footer class="footer">
             <p>© 2025 Sidney Apparels LLC - Manufacturing Excellence</p>
-            <div class="footer-credit">Made by Shantanu in HTML - Version 17.0</div>
+            <div class="footer-credit">Made by Shantanu in HTML - Version 22.0</div>
             <div class="footer-stats">
                 <div class="footer-stat">
                     <i class="fas fa-database"></i>
-                    <span>Data Version: <strong id="dataVersion">17.0.0</strong></span>
+                    <span>Data Version: <strong id="dataVersion">22.0.0</strong></span>
                 </div>
                 <div class="footer-stat">
                     <i class="fas fa-sync-alt"></i>
@@ -1445,7 +1381,7 @@
         </div>
     </div>
 
-    <!-- NEW: Edit Existing Details Modal - UPDATED v17 -->
+    <!-- UPDATED v22: Edit Existing Details Modal with CTQ dropdown -->
     <div id="editExistingDetailsModal" class="modal">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
@@ -1574,6 +1510,25 @@
                                 <option value="D">Grade D</option>
                             </select>
                         </div>
+                        <!-- UPDATED v22: CTQ dropdown instead of radio buttons -->
+                        <div class="form-group">
+                            <label for="editExistingCtqDropdown">Critical to Quality</label>
+                            <select id="editExistingCtqDropdown" style="width: 100%; padding: 10px 15px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-primary);">
+                                <option value="">Select CTQ Status</option>
+                                <option value="critical">Critical to Quality</option>
+                                <option value="not-critical">Not Critical</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Bottleneck</label>
+                            <div class="checkbox-group" style="margin-top: 5px;">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="editExistingBottleneck">
+                                    <span class="checkbox-custom"></span>
+                                    Bottleneck Operation
+                                </label>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="form-row" id="editExistingCustomMachineRow" style="display: none;">
@@ -1584,10 +1539,11 @@
                     </div>
                 </div>
                 
+                <!-- UPDATED v22: Other Machines Section -->
                 <div class="form-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                    <h4 style="margin-bottom: 15px; color: var(--success-color);"><i class="fas fa-plus-circle"></i> Add Other Machines & Efficiencies</h4>
+                    <h4 style="margin-bottom: 15px; color: var(--success-color);"><i class="fas fa-plus-circle"></i> Other Machines & Efficiencies</h4>
                     <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
-                        Add other machines this operator knows how to use. This will affect the grading criteria.
+                        <i class="fas fa-info-circle"></i> These machines are loaded from all operator records. Changes here affect the operator's known machines.
                     </p>
                     
                     <div id="otherMachinesContainer">
@@ -1672,10 +1628,13 @@
                         <i class="fas fa-plus"></i> Add Another Machine
                     </button>
                     
+                    <!-- Existing other machines -->
                     <div id="existingOtherMachines" style="margin-top: 20px;">
-                        <h5 style="color: var(--text-secondary); margin-bottom: 10px;">Existing Other Machines:</h5>
-                        <div id="existingOtherMachinesList" style="max-height: 150px; overflow-y: auto;">
-                            <!-- Existing other machines will be listed here -->
+                        <h5 style="color: var(--text-secondary); margin-bottom: 10px;">
+                            <i class="fas fa-database"></i> Operator's Known Machines (Loaded from ALL Records):
+                        </h5>
+                        <div id="existingOtherMachinesList" style="max-height: 150px; overflow-y: auto; background: rgba(255, 255, 255, 0.05); padding: 10px; border-radius: 8px;">
+                            <div class="no-data">No other machines recorded for this operator</div>
                         </div>
                     </div>
                 </div>
@@ -1929,7 +1888,7 @@
         </div>
     </div>
 
-    <!-- Edit Performance Record Modal -->
+    <!-- UPDATED v22: Edit Performance Record Modal with CTQ dropdown -->
     <div id="editPerformanceModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1962,6 +1921,27 @@
                                 <option value="C">Grade C</option>
                                 <option value="D">Grade D</option>
                             </select>
+                        </div>
+                    </div>
+                    <!-- UPDATED v22: CTQ dropdown and Bottleneck checkbox -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editRecordCtqDropdown">Critical to Quality</label>
+                            <select id="editRecordCtqDropdown" style="width: 100%; padding: 10px 15px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-primary);">
+                                <option value="">Select CTQ Status</option>
+                                <option value="critical">Critical to Quality</option>
+                                <option value="not-critical">Not Critical</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Bottleneck Operation</label>
+                            <div class="checkbox-group" style="margin-top: 5px;">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="editRecordBottleneck">
+                                    <span class="checkbox-custom"></span>
+                                    Bottleneck
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">
